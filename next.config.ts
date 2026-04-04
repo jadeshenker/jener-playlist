@@ -1,7 +1,16 @@
-import type { NextConfig } from "next";
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import type { NextConfig } from "next"
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  experimental: {
+    turbo: {
+      // Avoid picking a parent lockfile (e.g. ~/package-lock.json) as the workspace root
+      root: projectRoot,
+    },
+  },
+}
 
-export default nextConfig;
+export default nextConfig

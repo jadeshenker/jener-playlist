@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# spotify playlist editor
 
-## Getting Started
+minimal personal-use spotify playlist editor built with next.js app router + auth.js.
 
-First, run the development server:
+## v0 features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- sign in with spotify
+- view your playlists
+- view playlist items
+- reorder tracks
+- remove tracks
+
+## stack
+
+- next.js
+- auth.js / nextauth spotify provider
+- route handlers for spotify web api calls
+- no database
+
+## spotify app setup
+
+in the spotify developer dashboard:
+
+1. create a new app
+2. add this redirect uri for local development:
+
+```txt
+http://127.0.0.1:3000/api/auth/callback/spotify
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. copy your client id and client secret into `.env.local`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## env
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+copy `.env.example` to `.env.local` and fill in the values.
 
-## Learn More
+## install
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+open `http://127.0.0.1:3000`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- this starter assumes personal use only
+- it does not include refresh-token rotation hardening yet
+- it does not include add-track ui yet, though the server shape leaves room for it later
