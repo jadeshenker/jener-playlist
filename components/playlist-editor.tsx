@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 
-type PlaylistItem = {
+export type PlaylistItem = {
   track: {
     id: string
     name: string

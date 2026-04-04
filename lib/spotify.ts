@@ -32,3 +32,37 @@ export async function spotifyFetch(path: string, init?: RequestInit) {
 
   return response
 }
+
+type SpotifyPlaylistListItem = {
+  id: string
+  name: string
+  owner?: { id: string }
+  tracks?: { total: number }
+  public?: boolean | null
+}
+
+/** `/me/playlists` includes followed playlists; keep only those owned by the current user. */
+export async function fetchMyOwnedPlaylists(limit = 50): Promise<{
+  items: SpotifyPlaylistListItem[]
+}> {
+  const [meResponse, playlistsResponse] = await Promise.all([
+    spotifyFetch("/me"),
+    spotifyFetch(`/me/playlists?limit=${limit}`),
+  ])
+  const me = (await meResponse.json()) as { id: string }
+  const data = (await playlistsResponse.json()) as { items?: SpotifyPlaylistListItem[] }
+  const userId = me.id
+  const items = (data.items ?? []).filter((p) => p.owner?.id === userId)
+  return { ...data, items }
+}
+
+/** True if the playlist exists and `owner.id` matches the authenticated Spotify user. */
+export async function isCurrentUserPlaylistOwner(playlistId: string): Promise<boolean> {
+  const [playlistResponse, meResponse] = await Promise.all([
+    spotifyFetch(`/playlists/${playlistId}`),
+    spotifyFetch("/me"),
+  ])
+  const playlist = (await playlistResponse.json()) as { owner?: { id?: string } }
+  const me = (await meResponse.json()) as { id: string }
+  return playlist.owner?.id === me.id
+}
