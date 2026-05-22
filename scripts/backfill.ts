@@ -39,11 +39,17 @@ function pathFromNext(next: string): string {
   return `${url.pathname.replace(/^\/v1/, "")}${url.search}`
 }
 
+type SpotifyPaginatedPage<T> = {
+  items?: T[]
+  next?: string | null
+}
+
 async function fetchAllPages<T>(token: string, initialPath: string): Promise<T[]> {
   const items: T[] = []
   let path: string | null = initialPath
   while (path) {
-    const data = await spotifyGet<{ items?: T[]; next?: string | null }>(token, path)
+    const currentPath = path
+    const data: SpotifyPaginatedPage<T> = await spotifyGet<SpotifyPaginatedPage<T>>(token, currentPath)
     items.push(...(data.items ?? []))
     path = data.next ? pathFromNext(data.next) : null
   }
