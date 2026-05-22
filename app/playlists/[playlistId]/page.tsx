@@ -1,7 +1,10 @@
+import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
 import { auth } from "@/lib/auth"
+import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
+import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { spotifyFetch } from "@/lib/spotify"
 
 type PlaylistPageProps = {
@@ -26,7 +29,9 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     name: string
     owner?: { id: string }
     tracks?: { total: number }
+    images?: { url: string; height?: number | null; width?: number | null }[]
   }
+  const coverUrl = spotifyThumbnailUrl(playlist.images, 200)
   const me = (await meResponse.json()) as { id: string }
   const owned = playlist.owner?.id === me.id
 
@@ -39,15 +44,51 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     }
   }
 
+  const items = itemsData.items ?? []
+  const totalDurationMs = owned ? sumTrackDurationMs(items) : 0
+
   return (
     <main style={{ padding: "2rem 1.5rem 3rem" }}>
       <Link href="/playlists" style={{ color: "#555" }}>
         ← back to playlists
       </Link>
-      <h1 style={{ fontSize: 28, margin: "1rem 0 0" }}>{playlist.name}</h1>
-      <p style={{ color: "#555", marginTop: 12 }}>
-        {playlist.tracks?.total ?? 0} tracks
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 20,
+          marginTop: "1rem",
+        }}
+      >
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt=""
+            width={160}
+            height={160}
+            style={{
+              width: 160,
+              height: 160,
+              borderRadius: 8,
+              objectFit: "cover",
+              flexShrink: 0,
+              background: "#eee",
+            }}
+          />
+        ) : null}
+        <div>
+          <h1 style={{ fontSize: 28, margin: 0 }}>{playlist.name}</h1>
+          <p style={{ color: "#555", marginTop: 12, marginBottom: 0 }}>
+            {playlist.tracks?.total ?? 0} tracks
+            {totalDurationMs > 0 ? (
+              <>
+                {" "}
+                · {formatDurationMs(totalDurationMs)}
+              </>
+            ) : null}
+          </p>
+        </div>
+      </div>
 
       {owned ? (
         <PlaylistEditor

@@ -39,6 +39,7 @@ type SpotifyPlaylistListItem = {
   owner?: { id: string }
   tracks?: { total: number }
   public?: boolean | null
+  images?: { url: string; height?: number | null; width?: number | null }[]
 }
 
 /** `/me/playlists` includes followed playlists; keep only those owned by the current user. */
