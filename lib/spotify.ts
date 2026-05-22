@@ -42,19 +42,63 @@ type SpotifyPlaylistListItem = {
   images?: { url: string; height?: number | null; width?: number | null }[]
 }
 
+type SpotifyPlaylistsPage = {
+  items?: SpotifyPlaylistListItem[]
+  next?: string | null
+}
+
+type SpotifyPaginatedPage<T> = {
+  items?: T[]
+  next?: string | null
+  snapshot_id?: string
+}
+
+function pathFromSpotifyNext(next: string): string {
+  const url = new URL(next)
+  return `${url.pathname.replace(/^\/v1/, "")}${url.search}`
+}
+
+/** Fetches every page of playlist tracks (Spotify max 100 per request). */
+export async function fetchAllPlaylistItems<T>(playlistId: string, limit = 100): Promise<{
+  items: T[]
+  snapshot_id?: string
+}> {
+  const items: T[] = []
+  let snapshot_id: string | undefined
+  let path: string | null = `/playlists/${playlistId}/items?limit=${limit}`
+
+  while (path) {
+    const response = await spotifyFetch(path)
+    const data = (await response.json()) as SpotifyPaginatedPage<T>
+    if (data.snapshot_id) snapshot_id = data.snapshot_id
+    items.push(...(data.items ?? []))
+    path = data.next ? pathFromSpotifyNext(data.next) : null
+  }
+
+  return { items, snapshot_id }
+}
+
 /** `/me/playlists` includes followed playlists; keep only those owned by the current user. */
 export async function fetchMyOwnedPlaylists(limit = 50): Promise<{
   items: SpotifyPlaylistListItem[]
 }> {
-  const [meResponse, playlistsResponse] = await Promise.all([
-    spotifyFetch("/me"),
-    spotifyFetch(`/me/playlists?limit=${limit}`),
-  ])
+  const meResponse = await spotifyFetch("/me")
   const me = (await meResponse.json()) as { id: string }
-  const data = (await playlistsResponse.json()) as { items?: SpotifyPlaylistListItem[] }
   const userId = me.id
-  const items = (data.items ?? []).filter((p) => p.owner?.id === userId)
-  return { ...data, items }
+
+  const items: SpotifyPlaylistListItem[] = []
+  let path: string | null = `/me/playlists?limit=${limit}`
+
+  while (path) {
+    const playlistsResponse = await spotifyFetch(path)
+    const data = (await playlistsResponse.json()) as SpotifyPlaylistsPage
+    for (const playlist of data.items ?? []) {
+      if (playlist.owner?.id === userId) items.push(playlist)
+    }
+    path = data.next ? pathFromSpotifyNext(data.next) : null
+  }
+
+  return { items }
 }
 
 /** True if the playlist exists and `owner.id` matches the authenticated Spotify user. */

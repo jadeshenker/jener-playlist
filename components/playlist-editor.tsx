@@ -2,10 +2,11 @@
 
 import Image from "next/image"
 import { useMemo, useState } from "react"
-import { formatDurationMs } from "@/lib/format"
+import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 
 export type PlaylistItem = {
+  added_at?: string
   track: {
     id: string
     name: string
@@ -35,19 +36,34 @@ export default function PlaylistEditor({
   type Tab = "songs" | "artists"
   const [activeTab, setActiveTab] = useState<Tab>("songs")
   const [artistsCopied, setArtistsCopied] = useState(false)
+  const [songSearch, setSongSearch] = useState("")
 
   const simplifiedItems = useMemo(
     () =>
-      items.filter((item) => item.track).map((item) => ({
-        id: item.track!.id,
-        uri: item.track!.uri,
-        name: item.track!.name,
-        artists: item.track!.artists?.map((artist) => artist.name).join(", ") ?? "",
-        albumCoverUrl: spotifyThumbnailUrl(item.track!.album?.images),
-        durationMs: item.track!.duration_ms,
-      })),
+      items
+        .map((item, itemsIndex) => ({ item, itemsIndex }))
+        .filter(({ item }) => item.track)
+        .map(({ item, itemsIndex }) => ({
+          itemsIndex,
+          id: item.track!.id,
+          uri: item.track!.uri,
+          name: item.track!.name,
+          artists: item.track!.artists?.map((artist) => artist.name).join(", ") ?? "",
+          albumCoverUrl: spotifyThumbnailUrl(item.track!.album?.images),
+          durationMs: item.track!.duration_ms,
+          addedAt: item.added_at,
+        })),
     [items]
   )
+
+  const filteredSongs = useMemo(() => {
+    const query = songSearch.trim().toLowerCase()
+    if (!query) return simplifiedItems
+    return simplifiedItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(query) || item.artists.toLowerCase().includes(query)
+    )
+  }, [simplifiedItems, songSearch])
 
   const artistsInPlaylist = useMemo(() => {
     const counts = new Map<string, number>()
@@ -248,10 +264,43 @@ export default function PlaylistEditor({
       ) : null}
 
       {activeTab === "songs" ? (
+      <>
+        <div style={{ marginBottom: "1rem" }}>
+          <label htmlFor="playlist-song-search" style={{ display: "block", fontSize: 14, marginBottom: 6 }}>
+            search songs
+          </label>
+          <input
+            id="playlist-song-search"
+            type="search"
+            value={songSearch}
+            onChange={(event) => setSongSearch(event.target.value)}
+            placeholder="track or artist name"
+            style={{
+              width: "100%",
+              maxWidth: 360,
+              padding: "0.6rem 0.75rem",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              fontSize: 15,
+            }}
+          />
+          {songSearch.trim() ? (
+            <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "#666" }}>
+              {filteredSongs.length} of {simplifiedItems.length} songs
+            </p>
+          ) : null}
+        </div>
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
-        {simplifiedItems.map((item, index) => (
+        {filteredSongs.length === 0 ? (
+          <li style={{ color: "#666", fontSize: 14 }}>
+            {simplifiedItems.length === 0
+              ? "No songs in this playlist yet."
+              : "No songs match your search."}
+          </li>
+        ) : null}
+        {filteredSongs.map((item) => (
           <li
-            key={`${item.id}-${index}`}
+            key={`${item.id}-${item.itemsIndex}`}
             style={{
               border: "1px solid #ddd",
               borderRadius: 12,
@@ -294,6 +343,11 @@ export default function PlaylistEditor({
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600 }}>{item.name}</div>
                 <div style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{item.artists}</div>
+                {item.addedAt ? (
+                  <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>
+                    added {formatAddedAt(item.addedAt)}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -312,29 +366,31 @@ export default function PlaylistEditor({
 
             <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
               <button
-                disabled={index === 0 || isSaving}
+                disabled={item.itemsIndex === 0 || isSaving}
                 onClick={async () => {
-                  moveItemLocally(index, index - 1)
-                  await saveMove(index, index - 1)
+                  const from = item.itemsIndex
+                  moveItemLocally(from, from - 1)
+                  await saveMove(from, from - 1)
                 }}
-                style={trackButtonStyle(index === 0 || isSaving)}
+                style={trackButtonStyle(item.itemsIndex === 0 || isSaving)}
               >
                 up
               </button>
               <button
-                disabled={index === simplifiedItems.length - 1 || isSaving}
+                disabled={item.itemsIndex === items.length - 1 || isSaving}
                 onClick={async () => {
-                  moveItemLocally(index, index + 1)
-                  await saveMove(index, index + 1)
+                  const from = item.itemsIndex
+                  moveItemLocally(from, from + 1)
+                  await saveMove(from, from + 1)
                 }}
-                style={trackButtonStyle(index === simplifiedItems.length - 1 || isSaving)}
+                style={trackButtonStyle(item.itemsIndex === items.length - 1 || isSaving)}
               >
                 down
               </button>
               <button
                 disabled={isSaving}
                 onClick={async () => {
-                  await removeItem(index, item.uri)
+                  await removeItem(item.itemsIndex, item.uri)
                 }}
                 style={trackButtonStyle(isSaving)}
               >
@@ -344,6 +400,7 @@ export default function PlaylistEditor({
           </li>
         ))}
       </ul>
+      </>
       ) : null}
     </div>
   )

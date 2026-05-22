@@ -5,7 +5,7 @@ import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
 import { auth } from "@/lib/auth"
 import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
-import { spotifyFetch } from "@/lib/spotify"
+import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
 
 type PlaylistPageProps = {
   params: Promise<{ playlistId: string }>
@@ -27,21 +27,19 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
 
   const playlist = (await playlistResponse.json()) as {
     name: string
+    description?: string
     owner?: { id: string }
     tracks?: { total: number }
     images?: { url: string; height?: number | null; width?: number | null }[]
   }
+  const description = playlist.description?.trim()
   const coverUrl = spotifyThumbnailUrl(playlist.images, 200)
   const me = (await meResponse.json()) as { id: string }
   const owned = playlist.owner?.id === me.id
 
-  let itemsData: { items?: PlaylistItem[]; snapshot_id?: string } = {}
+  let itemsData: { items: PlaylistItem[]; snapshot_id?: string } = { items: [] }
   if (owned) {
-    const itemsResponse = await spotifyFetch(`/playlists/${playlistId}/items?limit=100`)
-    itemsData = (await itemsResponse.json()) as {
-      items?: PlaylistItem[]
-      snapshot_id?: string
-    }
+    itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
   }
 
   const items = itemsData.items ?? []
@@ -87,6 +85,20 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
               </>
             ) : null}
           </p>
+          {description ? (
+            <p
+              style={{
+                color: "#444",
+                marginTop: 12,
+                marginBottom: 0,
+                lineHeight: 1.5,
+                maxWidth: 560,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {description}
+            </p>
+          ) : null}
         </div>
       </div>
 
