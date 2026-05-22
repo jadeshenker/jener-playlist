@@ -1,0 +1,16 @@
+name: Sync playlists
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 6 AM UTC daily
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync
+        run: |
+          curl -f -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/sync"

@@ -6,9 +6,14 @@
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "dotenv -e .env.local -- drizzle-kit push",
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
+    "db:backfill": "dotenv -e .env.local -- tsx scripts/backfill.ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.3",
+    "drizzle-orm": "^0.45.2",
     "next": "15.2.4",
     "next-auth": "5.0.0-beta.25",
     "react": "19.0.0",
@@ -18,8 +23,11 @@
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.21.0",
     "eslint-config-next": "15.2.4",
+    "tsx": "^4.22.3",
     "typescript": "^5.8.2"
   }
 }
