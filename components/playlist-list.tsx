@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
+import { formatAddedAt } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 
 export type PlaylistWithMeta = {
@@ -13,6 +14,7 @@ export type PlaylistWithMeta = {
   images?: { url: string; height?: number | null; width?: number | null }[]
   pinned: boolean
   archived: boolean
+  dateCreated?: string | null
 }
 
 async function patchMeta(playlistId: string, name: string, patch: { pinned?: boolean; archived?: boolean }) {
@@ -69,6 +71,11 @@ function PlaylistRow({
           </div>
         </div>
       </Link>
+      {playlist.dateCreated ? (
+        <div style={{ fontSize: 13, color: "#888", flexShrink: 0 }}>
+          created {formatAddedAt(playlist.dateCreated)}
+        </div>
+      ) : null}
       <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
         <button
           onClick={onTogglePin}

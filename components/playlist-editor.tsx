@@ -343,13 +343,14 @@ export default function PlaylistEditor({
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 600 }}>{item.name}</div>
                 <div style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{item.artists}</div>
-                {item.addedAt ? (
-                  <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>
-                    added {formatAddedAt(item.addedAt)}
-                  </div>
-                ) : null}
               </div>
             </div>
+
+            {item.addedAt ? (
+              <div style={{ fontSize: 13, color: "#888", flexShrink: 0 }}>
+                added {formatAddedAt(item.addedAt)}
+              </div>
+            ) : null}
 
             {item.durationMs != null ? (
               <div

@@ -15,7 +15,7 @@ export default async function PlaylistsPage() {
 
   const [spotifyData, dbRows] = await Promise.all([
     fetchMyOwnedPlaylists(50),
-    db.select({ id: playlistsTable.id, pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable),
+    db.select({ id: playlistsTable.id, pinned: playlistsTable.pinned, archived: playlistsTable.archived, dateCreated: playlistsTable.dateCreated }).from(playlistsTable),
   ])
 
   const metaMap = new Map(dbRows.map((r) => [r.id, r]))
@@ -24,6 +24,7 @@ export default async function PlaylistsPage() {
     ...p,
     pinned: metaMap.get(p.id)?.pinned === 1,
     archived: metaMap.get(p.id)?.archived === 1,
+    dateCreated: metaMap.get(p.id)?.dateCreated ?? null,
   }))
 
   return (

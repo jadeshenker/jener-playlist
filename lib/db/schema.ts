@@ -6,6 +6,7 @@ export const playlists = sqliteTable("playlists", {
   latestSnapshotId: text("latest_snapshot_id"),
   pinned: integer("pinned").notNull().default(0),
   archived: integer("archived").notNull().default(0),
+  dateCreated: text("date_created"), // YYYY-MM-DD, nullable
   createdAt: integer("created_at").notNull(), // unix ms
   updatedAt: integer("updated_at").notNull(), // unix ms
 })
