@@ -24,7 +24,7 @@ export default async function PlaylistsPage() {
       dateCreated: playlistsTable.dateCreated,
     })
     .from(playlistsTable)
-    .orderBy(desc(playlistsTable.pinned), playlistsTable.name)
+    .orderBy(desc(playlistsTable.pinned), desc(playlistsTable.dateCreated))
 
   const playlists: PlaylistWithMeta[] = rows.map((r) => ({
     id: r.id,
