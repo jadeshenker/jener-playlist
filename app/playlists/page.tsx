@@ -1,7 +1,9 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import PlaylistList from "@/components/playlist-list"
 import { auth } from "@/lib/auth"
+import { db } from "@/lib/db/index"
+import { playlists as playlistsTable } from "@/lib/db/schema"
+import PlaylistList, { type PlaylistWithMeta } from "@/components/playlist-list"
 import { fetchMyOwnedPlaylists } from "@/lib/spotify"
 
 export default async function PlaylistsPage() {
@@ -11,7 +13,18 @@ export default async function PlaylistsPage() {
     redirect("/login")
   }
 
-  const data = await fetchMyOwnedPlaylists(50)
+  const [spotifyData, dbRows] = await Promise.all([
+    fetchMyOwnedPlaylists(50),
+    db.select({ id: playlistsTable.id, pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable),
+  ])
+
+  const metaMap = new Map(dbRows.map((r) => [r.id, r]))
+
+  const playlists: PlaylistWithMeta[] = (spotifyData.items ?? []).map((p) => ({
+    ...p,
+    pinned: metaMap.get(p.id)?.pinned === 1,
+    archived: metaMap.get(p.id)?.archived === 1,
+  }))
 
   return (
     <main style={{ padding: "2rem 1.5rem 3rem" }}>
@@ -34,7 +47,7 @@ export default async function PlaylistsPage() {
       <p style={{ color: "#555", marginTop: 12 }}>
         select a playlist to view and edit its songs.
       </p>
-      <PlaylistList playlists={data.items ?? []} />
+      <PlaylistList playlists={playlists} />
     </main>
   )
 }

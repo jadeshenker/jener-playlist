@@ -4,6 +4,8 @@ export const playlists = sqliteTable("playlists", {
   id: text("id").primaryKey(), // Spotify playlist ID
   name: text("name").notNull(),
   latestSnapshotId: text("latest_snapshot_id"),
+  pinned: integer("pinned").notNull().default(0),
+  archived: integer("archived").notNull().default(0),
   createdAt: integer("created_at").notNull(), // unix ms
   updatedAt: integer("updated_at").notNull(), // unix ms
 })

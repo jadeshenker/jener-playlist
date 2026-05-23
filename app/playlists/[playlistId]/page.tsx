@@ -1,8 +1,12 @@
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { eq } from "drizzle-orm"
 import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
+import PinArchiveButtons from "@/components/pin-archive-buttons"
 import { auth } from "@/lib/auth"
+import { db } from "@/lib/db/index"
+import { playlists as playlistsTable } from "@/lib/db/schema"
 import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
@@ -20,9 +24,10 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
 
   const { playlistId } = await params
 
-  const [playlistResponse, meResponse] = await Promise.all([
+  const [playlistResponse, meResponse, dbRow] = await Promise.all([
     spotifyFetch(`/playlists/${playlistId}`),
     spotifyFetch("/me"),
+    db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
   ])
 
   const playlist = (await playlistResponse.json()) as {
@@ -99,6 +104,12 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
               {description}
             </p>
           ) : null}
+          <PinArchiveButtons
+            playlistId={playlistId}
+            name={playlist.name}
+            initialPinned={dbRow?.pinned === 1}
+            initialArchived={dbRow?.archived === 1}
+          />
         </div>
       </div>
 
