@@ -1,10 +1,10 @@
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import { desc } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
 import { playlists as playlistsTable } from "@/lib/db/schema"
 import PlaylistList, { type PlaylistWithMeta } from "@/components/playlist-list"
+import { SignOutButton } from "@/components/auth-button"
 
 export default async function PlaylistsPage() {
   const session = await auth()
@@ -38,25 +38,10 @@ export default async function PlaylistsPage() {
 
   return (
     <main style={{ padding: "2rem 1.5rem 3rem" }}>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          marginBottom: 20,
-          padding: "0.75rem 1rem",
-          borderRadius: 8,
-          border: "1px solid #ccc",
-          background: "white",
-          color: "inherit",
-          textDecoration: "none",
-        }}
-      >
-        back to home
-      </Link>
-      <h1 style={{ fontSize: 28, margin: 0 }}>your playlists</h1>
-      <p style={{ color: "#555", marginTop: 12 }}>
-        select a playlist to view and edit its songs.
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 28, margin: 0 }}>your playlists</h1>
+        <SignOutButton />
+      </div>
       <PlaylistList playlists={playlists} />
     </main>
   )
