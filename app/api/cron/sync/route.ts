@@ -3,6 +3,7 @@ import { desc, eq, and } from "drizzle-orm"
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db/index"
 import { playlists, playlistVersions, playlistItems } from "@/lib/db/schema"
+import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 
 const SPOTIFY_API = "https://api.spotify.com/v1"
 
@@ -61,6 +62,8 @@ type SpotifyPlaylistFull = {
   name: string
   description?: string
   snapshot_id: string
+  images?: { url: string; height?: number | null; width?: number | null }[]
+  tracks?: { total: number }
 }
 
 type SpotifyPlaylistItem = {
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
     try {
       const spotifyPlaylist = await spotifyGet<SpotifyPlaylistFull>(
         token,
-        `/playlists/${playlist.id}?fields=id,name,description,snapshot_id`
+        `/playlists/${playlist.id}?fields=id,name,description,snapshot_id,images,tracks(total)`
       )
 
       if (spotifyPlaylist.snapshot_id === playlist.latestSnapshotId) {
@@ -128,10 +131,13 @@ export async function POST(request: NextRequest) {
       const now = Date.now()
       const description = spotifyPlaylist.description?.trim() || null
 
-      // Always update the stored snapshot_id and name
+      const coverUrl = spotifyThumbnailUrl(spotifyPlaylist.images, 56) ?? null
+      const trackCount = spotifyPlaylist.tracks?.total ?? null
+
+      // Always update the stored snapshot_id, name, cover, and track count
       await db
         .update(playlists)
-        .set({ name: spotifyPlaylist.name, latestSnapshotId: spotifyPlaylist.snapshot_id, updatedAt: now })
+        .set({ name: spotifyPlaylist.name, coverUrl, trackCount, latestSnapshotId: spotifyPlaylist.snapshot_id, updatedAt: now })
         .where(eq(playlists.id, playlist.id))
 
       // Check if content is identical to an existing version

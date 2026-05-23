@@ -4,14 +4,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 import { formatAddedAt } from "@/lib/format"
-import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 
 export type PlaylistWithMeta = {
   id: string
   name: string
-  tracks?: { total: number }
-  public?: boolean | null
-  images?: { url: string; height?: number | null; width?: number | null }[]
+  coverUrl?: string | null
+  trackCount?: number | null
   pinned: boolean
   archived: boolean
   dateCreated?: string | null
@@ -34,8 +32,6 @@ function PlaylistRow({
   onTogglePin: () => void
   onToggleArchive: () => void
 }) {
-  const coverUrl = spotifyThumbnailUrl(playlist.images)
-
   return (
     <li
       style={{
@@ -52,9 +48,9 @@ function PlaylistRow({
         href={`/playlists/${playlist.id}`}
         style={{ display: "flex", alignItems: "center", gap: 14, color: "inherit", textDecoration: "none", flex: 1, minWidth: 0 }}
       >
-        {coverUrl ? (
+        {playlist.coverUrl ? (
           <Image
-            src={coverUrl}
+            src={playlist.coverUrl}
             alt=""
             width={56}
             height={56}
@@ -67,7 +63,7 @@ function PlaylistRow({
             {playlist.name}
           </div>
           <div style={{ marginTop: 6, fontSize: 14, color: "#555" }}>
-            {playlist.tracks?.total ?? 0} tracks · {playlist.public ? "public" : "private"}
+            {playlist.trackCount ?? 0} tracks
           </div>
         </div>
       </Link>

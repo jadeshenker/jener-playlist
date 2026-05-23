@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { db } from "../lib/db/index"
 import { playlists, playlistVersions, playlistItems } from "../lib/db/schema"
 import { and, eq } from "drizzle-orm"
+import { spotifyThumbnailUrl } from "../lib/spotify-images"
 
 const SPOTIFY_API = "https://api.spotify.com/v1"
 
@@ -66,6 +67,8 @@ type SpotifyPlaylist = {
   description?: string
   snapshot_id: string
   owner?: { id: string }
+  images?: { url: string; height?: number | null; width?: number | null }[]
+  tracks?: { total: number }
 }
 
 type SpotifyPlaylistItem = {
@@ -134,19 +137,23 @@ async function main() {
 
     const hash = contentHash(tracks.map((t) => t.trackUri))
     const description = full.description?.trim() || null
+    const coverUrl = spotifyThumbnailUrl(full.images, 56) ?? null
+    const trackCount = full.tracks?.total ?? null
 
     await db
       .insert(playlists)
       .values({
         id: full.id,
         name: full.name,
+        coverUrl,
+        trackCount,
         latestSnapshotId: full.snapshot_id,
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
         target: playlists.id,
-        set: { name: full.name, latestSnapshotId: full.snapshot_id, updatedAt: now },
+        set: { name: full.name, coverUrl, trackCount, latestSnapshotId: full.snapshot_id, updatedAt: now },
       })
 
     const [version] = await db

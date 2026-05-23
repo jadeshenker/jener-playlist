@@ -10,7 +10,8 @@
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:backfill": "dotenv -e .env.local -- tsx scripts/backfill.ts",
-    "db:backfill-dates": "dotenv -e .env.local -- tsx scripts/backfill-date-created.ts"
+    "db:backfill-dates": "dotenv -e .env.local -- tsx scripts/backfill-date-created.ts",
+    "db:backfill-cover": "dotenv -e .env.local -- tsx scripts/backfill-cover.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",

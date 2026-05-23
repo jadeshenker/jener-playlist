@@ -1,10 +1,10 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { desc } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
 import { playlists as playlistsTable } from "@/lib/db/schema"
 import PlaylistList, { type PlaylistWithMeta } from "@/components/playlist-list"
-import { fetchMyOwnedPlaylists } from "@/lib/spotify"
 
 export default async function PlaylistsPage() {
   const session = await auth()
@@ -13,18 +13,27 @@ export default async function PlaylistsPage() {
     redirect("/login")
   }
 
-  const [spotifyData, dbRows] = await Promise.all([
-    fetchMyOwnedPlaylists(50),
-    db.select({ id: playlistsTable.id, pinned: playlistsTable.pinned, archived: playlistsTable.archived, dateCreated: playlistsTable.dateCreated }).from(playlistsTable),
-  ])
+  const rows = await db
+    .select({
+      id: playlistsTable.id,
+      name: playlistsTable.name,
+      coverUrl: playlistsTable.coverUrl,
+      trackCount: playlistsTable.trackCount,
+      pinned: playlistsTable.pinned,
+      archived: playlistsTable.archived,
+      dateCreated: playlistsTable.dateCreated,
+    })
+    .from(playlistsTable)
+    .orderBy(desc(playlistsTable.pinned), playlistsTable.name)
 
-  const metaMap = new Map(dbRows.map((r) => [r.id, r]))
-
-  const playlists: PlaylistWithMeta[] = (spotifyData.items ?? []).map((p) => ({
-    ...p,
-    pinned: metaMap.get(p.id)?.pinned === 1,
-    archived: metaMap.get(p.id)?.archived === 1,
-    dateCreated: metaMap.get(p.id)?.dateCreated ?? null,
+  const playlists: PlaylistWithMeta[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    coverUrl: r.coverUrl ?? null,
+    trackCount: r.trackCount ?? null,
+    pinned: r.pinned === 1,
+    archived: r.archived === 1,
+    dateCreated: r.dateCreated ?? null,
   }))
 
   return (
