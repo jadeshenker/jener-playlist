@@ -105,19 +105,37 @@ function PlaylistRow({
 
 export default function PlaylistList({ playlists: initial }: { playlists: PlaylistWithMeta[] }) {
   const [playlists, setPlaylists] = useState(initial)
+  const [query, setQuery] = useState("")
 
   const toggle = (id: string, name: string, patch: { pinned?: boolean; archived?: boolean }) => {
     setPlaylists((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
     patchMeta(id, name, patch)
   }
 
-  const active = playlists.filter((p) => !p.archived)
-  const archived = playlists.filter((p) => p.archived)
+  const q = query.trim().toLowerCase()
+  const active = playlists.filter((p) => !p.archived && (!q || p.name.toLowerCase().includes(q)))
+  const archived = playlists.filter((p) => p.archived && (!q || p.name.toLowerCase().includes(q)))
   const sorted = [...active.filter((p) => p.pinned), ...active.filter((p) => !p.pinned)]
 
   return (
     <div>
-      <ul style={{ listStyle: "none", padding: 0, margin: "1.5rem 0 0", display: "grid", gap: 12 }}>
+      <input
+        type="search"
+        placeholder="search playlists"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        style={{
+          marginTop: "1.5rem",
+          width: "100%",
+          padding: "0.6rem 0.875rem",
+          fontSize: 15,
+          borderRadius: 8,
+          border: "1px solid #ddd",
+          boxSizing: "border-box",
+          outline: "none",
+        }}
+      />
+      <ul style={{ listStyle: "none", padding: 0, margin: "1rem 0 0", display: "grid", gap: 12 }}>
         {sorted.map((playlist) => (
           <PlaylistRow
             key={playlist.id}
