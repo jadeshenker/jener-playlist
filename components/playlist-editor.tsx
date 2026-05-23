@@ -149,11 +149,13 @@ export default function PlaylistEditor({
   }
 
   const trackButtonStyle = (disabled: boolean): React.CSSProperties => ({
-    padding: "0.5rem 0.75rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
+    fontSize: 13,
+    padding: "4px 8px",
+    borderRadius: 6,
+    border: "1px solid #ddd",
     background: "white",
     cursor: disabled ? "default" : "pointer",
+    color: "#555",
   })
 
   async function copyArtistNames() {

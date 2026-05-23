@@ -33,11 +33,13 @@ export async function SignOutButton() {
     >
       <button
         style={{
-          padding: "0.75rem 1rem",
-          borderRadius: 8,
-          border: "1px solid #ccc",
+          fontSize: 13,
+          padding: "4px 8px",
+          borderRadius: 6,
+          border: "1px solid #ddd",
           background: "white",
           cursor: "pointer",
+          color: "#555",
         }}
       >
         sign out
