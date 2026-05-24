@@ -10,6 +10,7 @@ import { playlists as playlistsTable } from "@/lib/db/schema"
 import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
+import { ChevronLeft } from 'pixelarticons/react'
 
 type PlaylistPageProps = {
   params: Promise<{ playlistId: string }>
@@ -52,55 +53,28 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
 
   return (
     <main style={{ padding: "2rem 1.5rem 3rem" }}>
-      <Link href="/playlists" style={{ color: "#555" }}>
-        ← back to playlists
+      <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 13, textDecoration: "none" }}>
+        [ <ChevronLeft style={{ width: 14, height: 14 }} /> back to playlists ]
       </Link>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-          marginTop: "1rem",
-        }}
-      >
+
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginTop: "1.25rem", marginBottom: "1.5rem" }}>
         {coverUrl ? (
           <Image
             src={coverUrl}
             alt=""
-            width={160}
-            height={160}
-            style={{
-              width: 160,
-              height: 160,
-              borderRadius: 8,
-              objectFit: "cover",
-              flexShrink: 0,
-              background: "#eee",
-            }}
+            width={120}
+            height={120}
+            style={{ width: 120, height: 120, borderRadius: 6, objectFit: "cover", flexShrink: 0 }}
           />
         ) : null}
         <div>
-          <h1 style={{ fontSize: 28, margin: 0 }}>{playlist.name}</h1>
-          <p style={{ color: "#555", marginTop: 12, marginBottom: 0 }}>
+          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>{playlist.name}</h1>
+          <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14 }}>
             {playlist.tracks?.total ?? 0} tracks
-            {totalDurationMs > 0 ? (
-              <>
-                {" "}
-                · {formatDurationMs(totalDurationMs)}
-              </>
-            ) : null}
+            {totalDurationMs > 0 ? <> · {formatDurationMs(totalDurationMs)}</> : null}
           </p>
           {description ? (
-            <p
-              style={{
-                color: "#444",
-                marginTop: 12,
-                marginBottom: 0,
-                lineHeight: 1.5,
-                maxWidth: 560,
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14, lineHeight: 1.5, maxWidth: 560, whiteSpace: "pre-wrap", color: "#9461fb" }}>
               {description}
             </p>
           ) : null}
@@ -120,22 +94,8 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
           initialSnapshotId={itemsData.snapshot_id}
         />
       ) : (
-        <div
-          style={{
-            marginTop: "1.5rem",
-            padding: "1rem 1.25rem",
-            borderRadius: 12,
-            border: "1px solid #e0caca",
-            background: "#fff8f8",
-            color: "#444",
-            maxWidth: 520,
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600 }}>This isn’t your playlist</p>
-          <p style={{ margin: "0.75rem 0 0", lineHeight: 1.5 }}>
-            You can only reorder and remove tracks on playlists you created. Open one of your playlists from the list
-            instead.
-          </p>
+        <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", border: "1px solid #c4b5fd", borderRadius: 6, background: "#ede9fe", fontSize: 14 }}>
+          <p style={{ margin: 0 }}>this isn&apos;t your playlist — you can only edit playlists you own</p>
         </div>
       )}
     </main>

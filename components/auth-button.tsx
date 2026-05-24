@@ -10,10 +10,11 @@ export async function SignInButton() {
     >
       <button
         style={{
-          padding: "0.75rem 1rem",
-          borderRadius: 8,
-          border: "1px solid #ccc",
-          background: "white",
+          padding: "0.6rem 1.5rem",
+          border: "1.5px solid #c4b5fd",
+          borderRadius: 4,
+          background: "#ede9fe",
+          color: "#6d28d9",
           cursor: "pointer",
         }}
       >
@@ -33,16 +34,15 @@ export async function SignOutButton() {
     >
       <button
         style={{
-          fontSize: 13,
-          padding: "4px 8px",
-          borderRadius: 6,
-          border: "1px solid #ddd",
-          background: "white",
+          background: "none",
+          border: "none",
           cursor: "pointer",
-          color: "#555",
+          color: "#6d28d9",
+          textDecoration: "underline",
+          padding: 0,
         }}
       >
-        sign out
+        [ sign out ]
       </button>
     </form>
   )

@@ -4,6 +4,11 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
+import { ChevronDown, ChevronDown2, ChevronUp, Delete } from 'pixelarticons/react'
+
+const PURPLE = "#6d28d9"
+const BORDER = "#c4b5fd"
+const HEADER_BG = "#ede9fe"
 
 export type PlaylistItem = {
   added_at?: string
@@ -48,7 +53,7 @@ export default function PlaylistEditor({
           id: item.track!.id,
           uri: item.track!.uri,
           name: item.track!.name,
-          artists: item.track!.artists?.map((artist) => artist.name).join(", ") ?? "",
+          artists: item.track!.artists?.map((a) => a.name).join(", ") ?? "",
           albumCoverUrl: spotifyThumbnailUrl(item.track!.album?.images),
           durationMs: item.track!.duration_ms,
           addedAt: item.added_at,
@@ -60,8 +65,7 @@ export default function PlaylistEditor({
     const query = songSearch.trim().toLowerCase()
     if (!query) return simplifiedItems
     return simplifiedItems.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) || item.artists.toLowerCase().includes(query)
+      (item) => item.name.toLowerCase().includes(query) || item.artists.toLowerCase().includes(query)
     )
   }, [simplifiedItems, songSearch])
 
@@ -88,27 +92,14 @@ export default function PlaylistEditor({
   async function saveMove(from: number, to: number) {
     setError(null)
     setIsSaving(true)
-
     try {
       const insertBefore = from < to ? to + 1 : to
-
       const response = await fetch(`/api/playlists/${playlistId}/reorder`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          range_start: from,
-          insert_before: insertBefore,
-          range_length: 1,
-          snapshot_id: snapshotId,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ range_start: from, insert_before: insertBefore, range_length: 1, snapshot_id: snapshotId }),
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to save reorder")
-      }
-
+      if (!response.ok) throw new Error("Failed to save reorder")
       const data = await response.json()
       setSnapshotId(data.snapshot_id)
     } catch (err) {
@@ -121,26 +112,16 @@ export default function PlaylistEditor({
   async function removeItem(index: number, uri: string) {
     setError(null)
     setIsSaving(true)
-
     try {
       const response = await fetch(`/api/playlists/${playlistId}/remove`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tracks: [{ uri }],
-          snapshot_id: snapshotId,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tracks: [{ uri }], snapshot_id: snapshotId }),
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to remove track")
-      }
-
+      if (!response.ok) throw new Error("Failed to remove track")
       const data = await response.json()
       setSnapshotId(data.snapshot_id)
-      setItems((current) => current.filter((item) => item.track?.uri !== uri || current.indexOf(item) !== index))
+      setItems((current) => current.filter((item, i) => !(item.track?.uri === uri && i === index)))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
@@ -148,18 +129,8 @@ export default function PlaylistEditor({
     }
   }
 
-  const trackButtonStyle = (disabled: boolean): React.CSSProperties => ({
-    fontSize: 13,
-    padding: "4px 8px",
-    borderRadius: 6,
-    border: "1px solid #ddd",
-    background: "white",
-    cursor: disabled ? "default" : "pointer",
-    color: "#555",
-  })
-
   async function copyArtistNames() {
-    const text = artistsInPlaylist.map((artist) => artist.name).join("\n")
+    const text = artistsInPlaylist.map((a) => a.name).join("\n")
     try {
       await navigator.clipboard.writeText(text)
       setArtistsCopied(true)
@@ -169,57 +140,42 @@ export default function PlaylistEditor({
     }
   }
 
-  const tabButtonStyle = (active: boolean): React.CSSProperties => ({
-    padding: "0.5rem 1rem",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    background: active ? "#111" : "white",
-    color: active ? "white" : "inherit",
+  const actionBtnStyle = (disabled: boolean): React.CSSProperties => ({
+    background: "none",
+    border: "none",
+    cursor: disabled ? "default" : "pointer",
+    color: disabled ? "#c4b5fd" : PURPLE,
+    textDecoration: disabled ? "none" : "underline",
+    padding: 0,
+    font: "inherit",
+    fontSize: 13,
+  })
+
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    padding: "0.4rem 0.875rem",
+    border: `1px solid ${BORDER}`,
+    borderRadius: 4,
+    background: active ? PURPLE : HEADER_BG,
+    color: active ? "white" : PURPLE,
     cursor: "pointer",
-    fontWeight: active ? 600 : 400,
+    font: "inherit",
+    fontSize: 13,
   })
 
   return (
-    <div style={{ marginTop: "1.5rem" }}>
-      <div style={{ marginBottom: "0.75rem", color: "#555", fontSize: 14 }}>
-        v0 editor — reorder with up/down, remove songs, save directly to spotify
-      </div>
+    <div style={{ marginTop: "0.5rem" }}>
 
       {error ? (
-        <div
-          style={{
-            marginBottom: "1rem",
-            background: "#fff0f0",
-            border: "1px solid #ffd4d4",
-            padding: "0.75rem",
-            borderRadius: 10,
-          }}
-        >
+        <div style={{ marginBottom: "1rem", background: HEADER_BG, border: `1px solid ${BORDER}`, padding: "0.75rem", borderRadius: 4, fontSize: 13 }}>
           {error}
         </div>
       ) : null}
 
-      <div
-        role="tablist"
-        aria-label="Playlist views"
-        style={{ display: "flex", gap: 8, marginBottom: "1rem" }}
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "songs"}
-          onClick={() => setActiveTab("songs")}
-          style={tabButtonStyle(activeTab === "songs")}
-        >
+      <div style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
+        <button type="button" onClick={() => setActiveTab("songs")} style={tabBtnStyle(activeTab === "songs")}>
           songs ({simplifiedItems.length})
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "artists"}
-          onClick={() => setActiveTab("artists")}
-          style={tabButtonStyle(activeTab === "artists")}
-        >
+        <button type="button" onClick={() => setActiveTab("artists")} style={tabBtnStyle(activeTab === "artists")}>
           artists ({artistsInPlaylist.length})
         </button>
       </div>
@@ -228,182 +184,166 @@ export default function PlaylistEditor({
         <>
           {artistsInPlaylist.length > 0 ? (
             <div style={{ marginBottom: "1rem" }}>
-              <button
-                type="button"
-                onClick={() => void copyArtistNames()}
-                style={trackButtonStyle(false)}
-              >
-                {artistsCopied ? "copied!" : "copy all artist names"}
+              <button type="button" onClick={() => void copyArtistNames()} style={actionBtnStyle(false)}>
+                {artistsCopied ? "copied!" : "[ copy all artist names ]"}
               </button>
             </div>
           ) : null}
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
-          {artistsInPlaylist.length === 0 ? (
-            <li style={{ color: "#666", fontSize: 14 }}>No artists in this playlist yet.</li>
-          ) : (
-            artistsInPlaylist.map((artist) => (
-              <li
-                key={artist.name}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 12,
-                  background: "white",
-                  padding: "0.9rem 1rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontWeight: 600 }}>{artist.name}</div>
-                <div style={{ fontSize: 14, color: "#666" }}>
-                  {artist.trackCount} {artist.trackCount === 1 ? "track" : "tracks"}
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
+            <colgroup>
+              <col />
+              <col style={{ width: 80 }} />
+            </colgroup>
+            <thead>
+              <tr style={{ background: HEADER_BG }}>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>tracks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {artistsInPlaylist.length === 0 ? (
+                <tr>
+                  <td colSpan={2} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
+                    no artists yet
+                  </td>
+                </tr>
+              ) : (
+                artistsInPlaylist.map((artist) => (
+                  <tr key={artist.name} style={{ background: "white" }}>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>{artist.name}</td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>{artist.trackCount}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </>
       ) : null}
 
       {activeTab === "songs" ? (
-      <>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="playlist-song-search" style={{ display: "block", fontSize: 14, marginBottom: 6 }}>
-            search songs
-          </label>
-          <input
-            id="playlist-song-search"
-            type="search"
-            value={songSearch}
-            onChange={(event) => setSongSearch(event.target.value)}
-            placeholder="track or artist name"
-            style={{
-              width: "100%",
-              maxWidth: 360,
-              padding: "0.6rem 0.75rem",
-              borderRadius: 8,
-              border: "1px solid #ccc",
-              fontSize: 15,
-            }}
-          />
+        <>
+          <div style={{ marginBottom: "1rem" }}>
+            <input
+              type="search"
+              value={songSearch}
+              onChange={(e) => setSongSearch(e.target.value)}
+              placeholder="track or artist name"
+              style={{
+                width: "100%",
+                padding: "0.5rem 0.75rem",
+                fontSize: 14,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 4,
+                outline: "none",
+                color: PURPLE,
+                background: "white",
+              }}
+            />
+          </div>
           {songSearch.trim() ? (
-            <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "#666" }}>
+            <p style={{ margin: "0 0 0.75rem", fontSize: 13, color: "#888" }}>
               {filteredSongs.length} of {simplifiedItems.length} songs
             </p>
           ) : null}
-        </div>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
-        {filteredSongs.length === 0 ? (
-          <li style={{ color: "#666", fontSize: 14 }}>
-            {simplifiedItems.length === 0
-              ? "No songs in this playlist yet."
-              : "No songs match your search."}
-          </li>
-        ) : null}
-        {filteredSongs.map((item) => (
-          <li
-            key={`${item.id}-${item.itemsIndex}`}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              background: "white",
-              padding: "0.9rem 1rem",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flex: 1 }}>
-              {item.albumCoverUrl ? (
-                <Image
-                  src={item.albumCoverUrl}
-                  alt=""
-                  width={56}
-                  height={56}
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 8,
-                    objectFit: "cover",
-                    flexShrink: 0,
-                    background: "#eee",
-                  }}
-                />
-              ) : (
-                <div
-                  aria-hidden
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 8,
-                    flexShrink: 0,
-                    background: "linear-gradient(135deg, #e8e8e8 0%, #d4d4d4 100%)",
-                  }}
-                />
-              )}
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 600 }}>{item.name}</div>
-                <div style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{item.artists}</div>
-              </div>
-            </div>
 
-            {item.addedAt ? (
-              <div style={{ fontSize: 13, color: "#888", flexShrink: 0 }}>
-                added {formatAddedAt(item.addedAt)}
-              </div>
-            ) : null}
-
-            {item.durationMs != null ? (
-              <div
-                style={{
-                  fontSize: 14,
-                  color: "#666",
-                  fontVariantNumeric: "tabular-nums",
-                  flexShrink: 0,
-                }}
-              >
-                {formatDurationMs(item.durationMs)}
-              </div>
-            ) : null}
-
-            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-              <button
-                disabled={item.itemsIndex === 0 || isSaving}
-                onClick={async () => {
-                  const from = item.itemsIndex
-                  moveItemLocally(from, from - 1)
-                  await saveMove(from, from - 1)
-                }}
-                style={trackButtonStyle(item.itemsIndex === 0 || isSaving)}
-              >
-                up
-              </button>
-              <button
-                disabled={item.itemsIndex === items.length - 1 || isSaving}
-                onClick={async () => {
-                  const from = item.itemsIndex
-                  moveItemLocally(from, from + 1)
-                  await saveMove(from, from + 1)
-                }}
-                style={trackButtonStyle(item.itemsIndex === items.length - 1 || isSaving)}
-              >
-                down
-              </button>
-              <button
-                disabled={isSaving}
-                onClick={async () => {
-                  await removeItem(item.itemsIndex, item.uri)
-                }}
-                style={trackButtonStyle(isSaving)}
-              >
-                remove
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      </>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: 44 }} />
+              <col />
+              <col style={{ width: 210 }} />
+              <col style={{ width: 140 }} />
+              <col style={{ width: 105 }} />
+              <col style={{ width: 130 }} />
+            </colgroup>
+            <thead>
+              <tr style={{ background: HEADER_BG }}>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSongs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
+                    {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
+                  </td>
+                </tr>
+              ) : null}
+              {filteredSongs.map((item) => (
+                <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: "white" }}>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888" }}>
+                    {item.itemsIndex + 1}
+                  </td>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      {item.albumCoverUrl ? (
+                        <Image
+                          src={item.albumCoverUrl}
+                          alt=""
+                          width={36}
+                          height={36}
+                          style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }}
+                        />
+                      ) : (
+                        <div style={{ width: 36, height: 36, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
+                      )}
+                      <span>{item.name}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>
+                    {item.artists}
+                  </td>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", whiteSpace: "nowrap" }}>
+                    {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
+                  </td>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                    {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
+                  </td>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
+                    <span style={{ display: "inline-flex", gap: 10 }}>
+                      <button
+                        disabled={item.itemsIndex === 0 || isSaving}
+                        onClick={async () => {
+                          const from = item.itemsIndex
+                          moveItemLocally(from, from - 1)
+                          await saveMove(from, from - 1)
+                        }}
+                        style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }}
+                        title="move up"
+                      >
+                        <ChevronUp />
+                      </button>
+                      <button
+                        disabled={item.itemsIndex === items.length - 1 || isSaving}
+                        onClick={async () => {
+                          const from = item.itemsIndex
+                          moveItemLocally(from, from + 1)
+                          await saveMove(from, from + 1)
+                        }}
+                        style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }}
+                        title="move down"
+                      >
+                        <ChevronDown />
+                      </button>
+                      <button
+                        disabled={isSaving}
+                        onClick={async () => { await removeItem(item.itemsIndex, item.uri) }}
+                        style={{ ...actionBtnStyle(isSaving), fontSize: 15 }}
+                        title="remove"
+                      >
+                        <Delete />
+                      </button>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       ) : null}
     </div>
   )

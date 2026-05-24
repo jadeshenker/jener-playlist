@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+const PURPLE = "#6d28d9"
+
 export default function PinArchiveButtons({
   playlistId,
   name,
@@ -34,23 +36,24 @@ export default function PinArchiveButtons({
     patch({ archived: !archived })
   }
 
-  const btnStyle = (active: boolean): React.CSSProperties => ({
-    fontSize: 13,
-    padding: "4px 8px",
-    borderRadius: 6,
-    border: "1px solid #ddd",
-    background: active ? "#f0f0f0" : "white",
+  const btnStyle: React.CSSProperties = {
+    background: "none",
+    border: "none",
     cursor: "pointer",
-    color: "#555",
-  })
+    color: PURPLE,
+    textDecoration: "underline",
+    padding: 0,
+    font: "inherit",
+    fontSize: 13,
+  }
 
   return (
-    <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
-      <button onClick={togglePin} style={btnStyle(pinned)}>
-        {pinned ? "unpin" : "pin"}
+    <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+      <button onClick={togglePin} style={btnStyle}>
+        {pinned ? "[ unpin ]" : "[ pin ]"}
       </button>
-      <button onClick={toggleArchive} style={btnStyle(archived)}>
-        {archived ? "unarchive" : "archive"}
+      <button onClick={toggleArchive} style={btnStyle}>
+        {archived ? "[ unarchive ]" : "[ archive ]"}
       </button>
     </div>
   )
