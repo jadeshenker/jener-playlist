@@ -335,7 +335,7 @@ export default function PlaylistEditor({
                   ) : (
                     <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0, width: isXSmall ? 150 : undefined }}>
                     <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                     <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
                       {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
