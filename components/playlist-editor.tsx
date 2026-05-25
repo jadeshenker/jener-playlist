@@ -4,7 +4,7 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
-import { ChevronDown, ChevronDown2, ChevronUp, Delete } from 'pixelarticons/react'
+import { Checkbox, CheckboxOn, ChevronDown, ChevronDown2, ChevronUp, Delete } from 'pixelarticons/react'
 
 const PURPLE = "#6d28d9"
 const BORDER = "#c4b5fd"
@@ -42,6 +42,7 @@ export default function PlaylistEditor({
   const [activeTab, setActiveTab] = useState<Tab>("songs")
   const [artistsCopied, setArtistsCopied] = useState(false)
   const [songSearch, setSongSearch] = useState("")
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const simplifiedItems = useMemo(
     () =>
@@ -68,6 +69,33 @@ export default function PlaylistEditor({
       (item) => item.name.toLowerCase().includes(query) || item.artists.toLowerCase().includes(query)
     )
   }, [simplifiedItems, songSearch])
+
+  const allFilteredSelected = filteredSongs.length > 0 && filteredSongs.every((item) => selected.has(item.uri))
+
+  const toggleSelect = (uri: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(uri)) next.delete(uri)
+      else next.add(uri)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev)
+        filteredSongs.forEach((item) => next.delete(item.uri))
+        return next
+      })
+    } else {
+      setSelected((prev) => {
+        const next = new Set(prev)
+        filteredSongs.forEach((item) => next.add(item.uri))
+        return next
+      })
+    }
+  }
 
   const artistsInPlaylist = useMemo(() => {
     const counts = new Map<string, number>()
@@ -122,6 +150,29 @@ export default function PlaylistEditor({
       const data = await response.json()
       setSnapshotId(data.snapshot_id)
       setItems((current) => current.filter((item, i) => !(item.track?.uri === uri && i === index)))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function removeSelectedItems() {
+    if (selected.size === 0) return
+    setError(null)
+    setIsSaving(true)
+    try {
+      const toRemove = [...selected]
+      const response = await fetch(`/api/playlists/${playlistId}/remove`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tracks: toRemove.map((uri) => ({ uri })), snapshot_id: snapshotId }),
+      })
+      if (!response.ok) throw new Error("Failed to remove tracks")
+      const data = await response.json()
+      setSnapshotId(data.snapshot_id)
+      setItems((current) => current.filter((item) => !selected.has(item.track?.uri ?? "")))
+      setSelected(new Set())
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
@@ -226,7 +277,7 @@ export default function PlaylistEditor({
             <input
               type="search"
               value={songSearch}
-              onChange={(e) => setSongSearch(e.target.value)}
+              onChange={(e) => { setSongSearch(e.target.value); setSelected(new Set()) }}
               placeholder="track or artist name"
               style={{
                 width: "100%",
@@ -246,8 +297,21 @@ export default function PlaylistEditor({
             </p>
           ) : null}
 
+          {selected.size > 0 && (
+            <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
+              <button onClick={() => void removeSelectedItems()} disabled={isSaving} style={actionBtnStyle(isSaving)}>
+                [ remove {selected.size} ]
+              </button>
+              <button onClick={() => setSelected(new Set())} style={actionBtnStyle(false)}>
+                [ clear ]
+              </button>
+            </div>
+          )}
+
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
             <colgroup>
+              <col style={{ width: 44 }} />
               <col style={{ width: 44 }} />
               <col />
               <col style={{ width: 210 }} />
@@ -257,6 +321,11 @@ export default function PlaylistEditor({
             </colgroup>
             <thead>
               <tr style={{ background: HEADER_BG }}>
+                <th style={{ textAlign: "center", padding: "8px 12px", border: `1px solid ${BORDER}` }}>
+                  <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                    {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                  </button>
+                </th>
                 <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
                 <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
                 <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
@@ -268,13 +337,18 @@ export default function PlaylistEditor({
             <tbody>
               {filteredSongs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
+                  <td colSpan={7} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
                     {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
                   </td>
                 </tr>
               ) : null}
               {filteredSongs.map((item) => (
-                <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: "white" }}>
+                <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white" }}>
+                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
+                    <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                      {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                    </button>
+                  </td>
                   <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888" }}>
                     {item.itemsIndex + 1}
                   </td>

@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
   const body = await request.json()
 
-  const response = await spotifyFetch(`/playlists/${playlistId}/items`, {
+  const response = await spotifyFetch(`/playlists/${playlistId}/tracks`, {
     method: "DELETE",
     body: JSON.stringify({
       tracks: body.tracks,
