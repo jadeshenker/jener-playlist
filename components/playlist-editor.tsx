@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { Checkbox, CheckboxOn, ChevronDown, ChevronDown2, ChevronUp, Delete } from 'pixelarticons/react'
@@ -43,6 +43,14 @@ export default function PlaylistEditor({
   const [artistsCopied, setArtistsCopied] = useState(false)
   const [songSearch, setSongSearch] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [isNarrow, setIsNarrow] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth < 900)
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
 
   const simplifiedItems = useMemo(
     () =>
@@ -309,6 +317,38 @@ export default function PlaylistEditor({
             </div>
           )}
 
+          {isNarrow ? (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+              {filteredSongs.length === 0 ? (
+                <li style={{ padding: "12px", background: "white", color: "#888", fontSize: 13 }}>
+                  {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
+                </li>
+              ) : null}
+              {filteredSongs.map((item) => (
+                <li key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
+                  <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, flexShrink: 0, lineHeight: 0 }}>
+                    {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                  </button>
+                  {item.albumCoverUrl ? (
+                    <Image src={item.albumCoverUrl} alt="" width={40} height={40} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                    <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+                      {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
+                    </div>
+                  </div>
+                  <span style={{ display: "inline-flex", gap: 8, flexShrink: 0 }}>
+                    <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
+                    <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
+                    <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
             <colgroup>
               <col style={{ width: 44 }} />
@@ -355,13 +395,7 @@ export default function PlaylistEditor({
                   <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                       {item.albumCoverUrl ? (
-                        <Image
-                          src={item.albumCoverUrl}
-                          alt=""
-                          width={36}
-                          height={36}
-                          style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }}
-                        />
+                        <Image src={item.albumCoverUrl} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
                       ) : (
                         <div style={{ width: 36, height: 36, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
                       )}
@@ -379,44 +413,16 @@ export default function PlaylistEditor({
                   </td>
                   <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
                     <span style={{ display: "inline-flex", gap: 10 }}>
-                      <button
-                        disabled={item.itemsIndex === 0 || isSaving}
-                        onClick={async () => {
-                          const from = item.itemsIndex
-                          moveItemLocally(from, from - 1)
-                          await saveMove(from, from - 1)
-                        }}
-                        style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }}
-                        title="move up"
-                      >
-                        <ChevronUp />
-                      </button>
-                      <button
-                        disabled={item.itemsIndex === items.length - 1 || isSaving}
-                        onClick={async () => {
-                          const from = item.itemsIndex
-                          moveItemLocally(from, from + 1)
-                          await saveMove(from, from + 1)
-                        }}
-                        style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }}
-                        title="move down"
-                      >
-                        <ChevronDown />
-                      </button>
-                      <button
-                        disabled={isSaving}
-                        onClick={async () => { await removeItem(item.itemsIndex, item.uri) }}
-                        style={{ ...actionBtnStyle(isSaving), fontSize: 15 }}
-                        title="remove"
-                      >
-                        <Delete />
-                      </button>
+                      <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
+                      <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
+                      <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
                     </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          )}
         </>
       ) : null}
     </div>
