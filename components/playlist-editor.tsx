@@ -44,9 +44,12 @@ export default function PlaylistEditor({
   const [songSearch, setSongSearch] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [isNarrow, setIsNarrow] = useState(false)
-
+  const [isXSmall, setIsXSmall] = useState(false)
   useEffect(() => {
-    const check = () => setIsNarrow(window.innerWidth < 900)
+    const check = () => {
+      setIsNarrow(window.innerWidth < 900)
+      setIsXSmall(window.innerWidth <= 500)
+    }
     check()
     window.addEventListener("resize", check)
     return () => window.removeEventListener("resize", check)
@@ -305,20 +308,18 @@ export default function PlaylistEditor({
             </p>
           ) : null}
 
-          {selected.size > 0 && (
-            <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
-              <button onClick={() => void removeSelectedItems()} disabled={isSaving} style={actionBtnStyle(isSaving)}>
-                [ remove {selected.size} ]
-              </button>
-              <button onClick={() => setSelected(new Set())} style={actionBtnStyle(false)}>
-                [ clear ]
-              </button>
-            </div>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", padding: "0.5rem 0", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
+            <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
+            <button onClick={() => void removeSelectedItems()} disabled={selected.size === 0 || isSaving} style={actionBtnStyle(selected.size === 0 || isSaving)}>
+              [ remove {selected.size} ]
+            </button>
+            <button onClick={() => setSelected(new Set())} disabled={selected.size === 0} style={actionBtnStyle(selected.size === 0)}>
+              [ clear ]
+            </button>
+          </div>
 
           {isNarrow ? (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
               {filteredSongs.length === 0 ? (
                 <li style={{ padding: "12px", background: "white", color: "#888", fontSize: 13 }}>
                   {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
@@ -340,10 +341,10 @@ export default function PlaylistEditor({
                       {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
                     </div>
                   </div>
-                  <span style={{ display: "inline-flex", gap: 8, flexShrink: 0 }}>
-                    <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
-                    <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
-                    <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
+                  <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move up"><ChevronUp style={{ width: 28, height: 28, display: "block" }} /></button>
+                    <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === items.length - 1 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === items.length - 1 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move down"><ChevronDown style={{ width: 28, height: 28, display: "block" }} /></button>
+                    {!isXSmall && <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ background: "none", border: "none", cursor: isSaving ? "default" : "pointer", padding: 0, color: isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="remove"><Delete style={{ width: 26, height: 26, display: "block" }} /></button>}
                   </span>
                 </li>
               ))}
@@ -361,17 +362,17 @@ export default function PlaylistEditor({
             </colgroup>
             <thead>
               <tr style={{ background: HEADER_BG }}>
-                <th style={{ textAlign: "center", padding: "8px 12px", border: `1px solid ${BORDER}` }}>
+                <th style={{ textAlign: "center", padding: "8px 12px", borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
                   <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
                     {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
                   </button>
                 </th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>
               </tr>
             </thead>
             <tbody>

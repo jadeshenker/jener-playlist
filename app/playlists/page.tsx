@@ -37,7 +37,7 @@ export default async function PlaylistsPage() {
   }))
 
   return (
-    <main style={{ padding: "2rem 1.5rem 3rem" }}>
+    <main>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
         <h1 style={{ fontSize: 32, margin: 0, letterSpacing: "0.12em", fontWeight: 400 }}>playlists</h1>
         <SignOutButton />

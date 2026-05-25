@@ -52,7 +52,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const totalDurationMs = owned ? sumTrackDurationMs(items) : 0
 
   return (
-    <main style={{ padding: "2rem 1.5rem 3rem" }}>
+    <main>
       <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 13, textDecoration: "none" }}>
         [ <ChevronLeft style={{ width: 14, height: 14 }} /> back to playlists ]
       </Link>
