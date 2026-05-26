@@ -47,6 +47,26 @@ function authRedirect({ url, baseUrl }: { url: string; baseUrl: string }) {
   return origin
 }
 
+async function refreshSpotifyToken(refreshToken: string) {
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.AUTH_SPOTIFY_ID}:${process.env.AUTH_SPOTIFY_SECRET}`
+      ).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+  })
+  if (!res.ok) throw new Error("Spotify refresh token request failed")
+  const data = await res.json() as { access_token: string; refresh_token?: string; expires_in: number }
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? refreshToken,
+    expiresAt: Math.floor(Date.now() / 1000) + data.expires_in,
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...(redirectProxyUrl ? { redirectProxyUrl } : {}),
   providers: [
@@ -69,11 +89,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
         token.expiresAt = account.expires_at
+        return token
+      }
+
+      if (Date.now() / 1000 < (token.expiresAt ?? 0) - 60) return token
+
+      // Don't retry after a failed refresh — require the user to re-login
+      if (token.error === "RefreshTokenError") return token
+
+      try {
+        const refreshed = await refreshSpotifyToken(token.refreshToken!)
+        token.accessToken = refreshed.accessToken
+        token.refreshToken = refreshed.refreshToken
+        token.expiresAt = refreshed.expiresAt
+        delete token.error
+      } catch {
+        token.error = "RefreshTokenError"
       }
       return token
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined
+      session.error = token.error
       return session
     },
   },

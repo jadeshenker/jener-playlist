@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 
 const SPOTIFY_API_BASE = "https://api.spotify.com/v1"
@@ -7,6 +8,10 @@ async function getAccessToken() {
 
   if (!session?.accessToken) {
     throw new Error("Not authenticated")
+  }
+
+  if (session.error === "RefreshTokenError") {
+    redirect("/login")
   }
 
   return session.accessToken
