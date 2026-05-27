@@ -10,12 +10,13 @@ export async function SignInButton() {
     >
       <button
         style={{
-          padding: "0.6rem 1.5rem",
+          padding: "0.6rem 1rem",
           border: "1.5px solid #c4b5fd",
-          borderRadius: 4,
+          borderRadius: 20,
           background: "#ede9fe",
           color: "#6d28d9",
           cursor: "pointer",
+          fontSize: 14,
         }}
       >
         continue with spotify
