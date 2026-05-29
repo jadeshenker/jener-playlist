@@ -83,6 +83,38 @@ type SyncResult =
   | { id: string; name: string; status: "new_version"; version: string }
   | { id: string; name: string; status: "error"; error: string }
 
+async function discoverNewPlaylists(token: string): Promise<string[]> {
+  const page = await spotifyGet<SpotifyPage<SpotifyPlaylistFull>>(token, `/me/playlists?limit=10`)
+  const existing = new Set(
+    (await db.select({ id: playlists.id }).from(playlists)).map((p) => p.id)
+  )
+  const toAdd: { id: string; name: string; latestSnapshotId: string; coverUrl: string | null; trackCount: number | null; pinned: number; archived: number; dateCreated: string | null; createdAt: number; updatedAt: number }[] = []
+  const now = Date.now()
+  for (const item of page.items ?? []) {
+    if (existing.has(item.id)) break
+    if (!item.tracks?.total) continue
+    const rawItems = await fetchAllPages<SpotifyPlaylistItem>(token, `/playlists/${item.id}/items?limit=100`)
+    const addedDates = rawItems
+      .filter((i) => i.track?.uri?.startsWith("spotify:track:") && i.added_at)
+      .map((i) => i.added_at!)
+    const dateCreated = addedDates.length > 0 ? addedDates.sort()[0].slice(0, 10) : null
+    toAdd.push({
+      id: item.id,
+      name: item.name,
+      latestSnapshotId: item.snapshot_id,
+      coverUrl: spotifyThumbnailUrl(item.images, 56) ?? null,
+      trackCount: item.tracks?.total ?? null,
+      pinned: 0,
+      archived: 0,
+      dateCreated,
+      createdAt: now,
+      updatedAt: now,
+    })
+  }
+  if (toAdd.length > 0) await db.insert(playlists).values(toAdd)
+  return toAdd.map((p) => p.name)
+}
+
 export async function POST(request: NextRequest) {
   if (request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response("Unauthorized", { status: 401 })
@@ -94,6 +126,8 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
+
+  const discovered = await discoverNewPlaylists(token)
 
   const tracked = await db.select().from(playlists)
   const results: SyncResult[] = []
@@ -127,7 +161,7 @@ export async function POST(request: NextRequest) {
           addedAt: item.added_at ?? null,
         }))
 
-      const hash = contentHash(tracks.map((t) => t.trackUri))
+      const hash = contentHash(tracks.map((t) => t.trackUri).sort())
       const now = Date.now()
       const description = spotifyPlaylist.description?.trim() || null
 
@@ -198,5 +232,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ results })
+  return NextResponse.json({ discovered, results })
 }
