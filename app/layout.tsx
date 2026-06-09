@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { DM_Mono } from "next/font/google"
+import Footer from "@/components/footer"
 import "./globals.css"
 
 const dmMono = DM_Mono({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={dmMono.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Footer />
+      </body>
     </html>
   )
 }
