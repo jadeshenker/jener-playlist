@@ -9,15 +9,7 @@ export async function SignInButton() {
       }}
     >
       <button
-        style={{
-          padding: "0.6rem 1rem",
-          border: "1.5px solid #c4b5fd",
-          borderRadius: 20,
-          background: "#ede9fe",
-          color: "#6d28d9",
-          cursor: "pointer",
-          fontSize: 14,
-        }}
+        className="contained"
       >
         continue with spotify
       </button>
@@ -34,16 +26,9 @@ export async function SignOutButton() {
       }}
     >
       <button
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#6d28d9",
-          textDecoration: "underline",
-          padding: 0,
-        }}
+        className="contained"
       >
-        [ sign out ]
+        sign out
       </button>
     </form>
   )

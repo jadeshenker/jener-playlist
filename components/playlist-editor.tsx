@@ -214,14 +214,9 @@ export default function PlaylistEditor({
   })
 
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
-    padding: "0.4rem 0.875rem",
-    border: `1px solid ${BORDER}`,
-    borderRadius: 4,
-    background: active ? PURPLE : HEADER_BG,
-    color: active ? "white" : PURPLE,
-    cursor: "pointer",
-    font: "inherit",
-    fontSize: 13,
+    background: active ? "blue" : HEADER_BG,
+    color: active ? "white" : "blue",
+    borderColor: active ? PURPLE : BORDER,
   })
 
   return (
@@ -234,10 +229,10 @@ export default function PlaylistEditor({
       ) : null}
 
       <div style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
-        <button type="button" onClick={() => setActiveTab("songs")} style={tabBtnStyle(activeTab === "songs")}>
+        <button className="contained" type="button" onClick={() => setActiveTab("songs")} style={tabBtnStyle(activeTab === "songs")}>
           songs ({simplifiedItems.length})
         </button>
-        <button type="button" onClick={() => setActiveTab("artists")} style={tabBtnStyle(activeTab === "artists")}>
+        <button className="contained" type="button" onClick={() => setActiveTab("artists")} style={tabBtnStyle(activeTab === "artists")}>
           artists ({artistsInPlaylist.length})
         </button>
       </div>

@@ -39,6 +39,10 @@ const actionBtnStyle: React.CSSProperties = {
   fontSize: 13,
 }
 
+function EmptyPlaylists({border}: {border?: boolean}) {
+  return <div style={{ padding: "12px", border: border ? `1px solid ${BORDER}` : 'none', fontSize: '14px', textAlign: 'center', borderTop: 'none', background: 'white' }}>no playlists. make one?</div>
+}
+
 function PlaylistTable({
   playlists,
   onTogglePin,
@@ -49,6 +53,7 @@ function PlaylistTable({
   onToggleArchive: (id: string, name: string, current: boolean) => void
 }) {
   return (
+    <>
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
       <colgroup>
         <col />
@@ -98,6 +103,9 @@ function PlaylistTable({
         ))}
       </tbody>
     </table>
+    {!playlists.length && <EmptyPlaylists border />}
+    </>
+
   )
 }
 
@@ -111,8 +119,9 @@ function PlaylistListView({
   onToggleArchive: (id: string, name: string, current: boolean) => void
 }) {
   return (
+    <>
     <ul style={{ listStyle: "none", padding: 0, margin: 0, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
-      {playlists.map((playlist) => (
+      {playlists.length ? playlists.map((playlist) => (
         <li key={playlist.id} style={{ background: "white", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
           <Link href={`/playlists/${playlist.id}`} style={{ display: "flex", alignItems: "center", gap: 10, color: PURPLE, textDecoration: "none", flex: 1, minWidth: 0 }}>
             {playlist.coverUrl ? (
@@ -137,8 +146,9 @@ function PlaylistListView({
             </button>
           </span>
         </li>
-      ))}
+      )) : <EmptyPlaylists />}
     </ul>
+    </>
   )
 }
 
