@@ -6,6 +6,11 @@ import { spotifyThumbnailUrl } from "../lib/spotify-images"
 
 const SPOTIFY_API = "https://api.spotify.com/v1"
 
+// Hardcoded date overrides where min(addedAt) is wrong
+const DATE_CREATED_OVERRIDES: Record<string, string> = {
+  "4KVoTfuOy5plZd0jKVx8qs": "2025-04-01",
+}
+
 async function getAccessToken(): Promise<string> {
   const { AUTH_SPOTIFY_ID, AUTH_SPOTIFY_SECRET, SPOTIFY_REFRESH_TOKEN } = process.env
   if (!AUTH_SPOTIFY_ID || !AUTH_SPOTIFY_SECRET || !SPOTIFY_REFRESH_TOKEN) {
@@ -82,6 +87,30 @@ type SpotifyPlaylistItem = {
   } | null
 }
 
+type SpotifyTrack = {
+  id: string
+  album?: {
+    images?: { url: string; height?: number | null; width?: number | null }[]
+  }
+}
+
+async function fetchTrackCovers(token: string, trackIds: string[]): Promise<Map<string, string | null>> {
+  const coverByTrackId = new Map<string, string | null>()
+  for (let i = 0; i < trackIds.length; i += 50) {
+    const batch = trackIds.slice(i, i + 50)
+    const res = await fetch(`${SPOTIFY_API}/tracks?ids=${batch.join(",")}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error(`/tracks: ${res.status} ${await res.text()}`)
+    const data = (await res.json()) as { tracks: SpotifyTrack[] }
+    for (const track of data.tracks) {
+      if (!track) continue
+      coverByTrackId.set(track.id, spotifyThumbnailUrl(track.album?.images, 64) ?? null)
+    }
+  }
+  return coverByTrackId
+}
+
 async function main() {
   const token = await getAccessToken()
   console.log("Got Spotify access token")
@@ -96,10 +125,8 @@ async function main() {
   const now = Date.now()
 
   for (const playlist of owned) {
-    // Fetch full playlist object for description + snapshot_id
     const full = await spotifyGet<SpotifyPlaylist>(token, `/playlists/${playlist.id}`)
 
-    // Skip if v1.0 already exists
     const existing = await db
       .select({ id: playlistVersions.id })
       .from(playlistVersions)
@@ -122,7 +149,6 @@ async function main() {
       `/playlists/${playlist.id}/items?limit=100`
     )
 
-    // Filter out local files and null tracks
     const tracks = rawItems
       .filter((item) => item.track?.uri?.startsWith("spotify:track:"))
       .map((item, i) => ({
@@ -134,6 +160,19 @@ async function main() {
         artists: item.track!.artists?.map((a) => a.name).join(", ") ?? null,
         addedAt: item.added_at ?? null,
       }))
+
+    // Derive dateCreated from the earliest addedAt, with override support
+    const dateCreated = DATE_CREATED_OVERRIDES[full.id] ?? (() => {
+      const dates = tracks.map((t) => t.addedAt).filter(Boolean) as string[]
+      const min = dates.sort()[0]
+      return min ? min.substring(0, 10) : null
+    })()
+
+    // Fetch album covers for all tracks in this playlist
+    const uniqueTrackIds = [...new Set(tracks.map((t) => t.trackId))]
+    const coverByTrackId = uniqueTrackIds.length > 0
+      ? await fetchTrackCovers(token, uniqueTrackIds)
+      : new Map<string, string | null>()
 
     const hash = contentHash(tracks.map((t) => t.trackUri))
     const description = full.description?.trim() || null
@@ -147,13 +186,14 @@ async function main() {
         name: full.name,
         coverUrl,
         trackCount,
+        dateCreated,
         latestSnapshotId: full.snapshot_id,
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
         target: playlists.id,
-        set: { name: full.name, coverUrl, trackCount, latestSnapshotId: full.snapshot_id, updatedAt: now },
+        set: { name: full.name, coverUrl, trackCount, dateCreated, latestSnapshotId: full.snapshot_id, updatedAt: now },
       })
 
     const [version] = await db
@@ -173,11 +213,15 @@ async function main() {
 
     if (tracks.length > 0) {
       await db.insert(playlistItems).values(
-        tracks.map((t) => ({ versionId: version.id, ...t }))
+        tracks.map((t) => ({
+          versionId: version.id,
+          ...t,
+          albumCoverUrl: coverByTrackId.get(t.trackId) ?? null,
+        }))
       )
     }
 
-    console.log(`  ✓ ${full.name} — v1.0, ${tracks.length} tracks`)
+    console.log(`  ✓ ${full.name} — v1.0, ${tracks.length} tracks, dateCreated: ${dateCreated ?? "unknown"}`)
   }
 
   console.log("\nBackfill complete!")
