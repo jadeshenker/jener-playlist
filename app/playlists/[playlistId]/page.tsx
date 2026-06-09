@@ -1,12 +1,12 @@
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { eq } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
 import PinArchiveButtons from "@/components/pin-archive-buttons"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
-import { playlists as playlistsTable } from "@/lib/db/schema"
+import { playlistItems as playlistItemsTable, playlists as playlistsTable, playlistVersions } from "@/lib/db/schema"
 import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
@@ -18,37 +18,98 @@ type PlaylistPageProps = {
 
 export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const session = await auth()
+  const offline = Boolean(process.env.OFFLINE)
 
-  if (!session) {
+  if (!session && !offline) {
     redirect("/login")
   }
 
   const { playlistId } = await params
 
-  const [playlistResponse, meResponse, dbRow] = await Promise.all([
-    spotifyFetch(`/playlists/${playlistId}`),
-    spotifyFetch("/me"),
-    db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
-  ])
+  let playlistName: string
+  let description: string | undefined
+  let coverUrl: string | undefined
+  let trackCount: number
+  let owned: boolean
+  let items: PlaylistItem[]
+  let snapshotId: string | undefined
+  let pinnedVal: number
+  let archivedVal: number
 
-  const playlist = (await playlistResponse.json()) as {
-    name: string
-    description?: string
-    owner?: { id: string }
-    tracks?: { total: number }
-    images?: { url: string; height?: number | null; width?: number | null }[]
+  if (offline) {
+    const [dbPlaylist, latestVersion] = await Promise.all([
+      db.select().from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
+      db
+        .select()
+        .from(playlistVersions)
+        .where(eq(playlistVersions.playlistId, playlistId))
+        .orderBy(desc(playlistVersions.major), desc(playlistVersions.minor))
+        .limit(1)
+        .get(),
+    ])
+
+    if (!dbPlaylist) redirect("/playlists")
+
+    const dbItems = latestVersion
+      ? await db
+          .select()
+          .from(playlistItemsTable)
+          .where(eq(playlistItemsTable.versionId, latestVersion.id))
+          .orderBy(playlistItemsTable.position)
+          .all()
+      : []
+
+    playlistName = dbPlaylist.name
+    description = latestVersion?.description ?? undefined
+    coverUrl = dbPlaylist.coverUrl ?? undefined
+    trackCount = dbPlaylist.trackCount ?? dbItems.length
+    owned = true
+    snapshotId = latestVersion?.snapshotId
+    pinnedVal = dbPlaylist.pinned
+    archivedVal = dbPlaylist.archived
+    items = dbItems.map((item) => ({
+      added_at: item.addedAt ?? undefined,
+      track: {
+        id: item.trackId,
+        name: item.trackName,
+        uri: item.trackUri,
+        duration_ms: item.durationMs ?? undefined,
+        artists: item.artists ? item.artists.split(",").map((a) => ({ name: a.trim() })) : [],
+      },
+    }))
+  } else {
+    const [playlistResponse, meResponse, dbRow] = await Promise.all([
+      spotifyFetch(`/playlists/${playlistId}`),
+      spotifyFetch("/me"),
+      db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
+    ])
+
+    const playlist = (await playlistResponse.json()) as {
+      name: string
+      description?: string
+      owner?: { id: string }
+      tracks?: { total: number }
+      images?: { url: string; height?: number | null; width?: number | null }[]
+    }
+    const me = (await meResponse.json()) as { id: string }
+
+    playlistName = playlist.name
+    description = playlist.description?.trim()
+    coverUrl = spotifyThumbnailUrl(playlist.images, 200)
+    trackCount = playlist.tracks?.total ?? 0
+    owned = playlist.owner?.id === me.id
+    pinnedVal = dbRow?.pinned ?? 0
+    archivedVal = dbRow?.archived ?? 0
+
+    if (owned) {
+      const itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
+      items = itemsData.items ?? []
+      snapshotId = itemsData.snapshot_id
+    } else {
+      items = []
+    }
   }
-  const description = playlist.description?.trim()
-  const coverUrl = spotifyThumbnailUrl(playlist.images, 200)
-  const me = (await meResponse.json()) as { id: string }
-  const owned = playlist.owner?.id === me.id
 
-  let itemsData: { items: PlaylistItem[]; snapshot_id?: string } = { items: [] }
-  if (owned) {
-    itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
-  }
-
-  const items = itemsData.items ?? []
   const totalDurationMs = owned ? sumTrackDurationMs(items) : 0
 
   return (
@@ -68,9 +129,9 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
           />
         ) : null}
         <div>
-          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>{playlist.name}</h1>
+          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>{playlistName}</h1>
           <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14 }}>
-            {playlist.tracks?.total ?? 0} tracks
+            {trackCount} tracks
             {totalDurationMs > 0 ? <> · {formatDurationMs(totalDurationMs)}</> : null}
           </p>
           {description ? (
@@ -80,9 +141,9 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
           ) : null}
           <PinArchiveButtons
             playlistId={playlistId}
-            name={playlist.name}
-            initialPinned={dbRow?.pinned === 1}
-            initialArchived={dbRow?.archived === 1}
+            name={playlistName}
+            initialPinned={pinnedVal === 1}
+            initialArchived={archivedVal === 1}
           />
         </div>
       </div>
@@ -90,8 +151,8 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
       {owned ? (
         <PlaylistEditor
           playlistId={playlistId}
-          initialItems={itemsData.items ?? []}
-          initialSnapshotId={itemsData.snapshot_id}
+          initialItems={items}
+          initialSnapshotId={snapshotId}
         />
       ) : (
         <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", border: "1px solid #c4b5fd", borderRadius: 6, background: "#ede9fe", fontSize: 14 }}>
