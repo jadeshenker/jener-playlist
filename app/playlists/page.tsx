@@ -19,9 +19,7 @@ interface PlaylistRow {
 export default async function PlaylistsPage() {
   const session = await auth()
 
-  const offline = Boolean(process.env.OFFLINE)
-
-  if (!session && !offline) {
+  if (!session) {
     redirect("/login")
   }
 

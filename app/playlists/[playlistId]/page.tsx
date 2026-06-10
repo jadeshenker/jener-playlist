@@ -1,12 +1,12 @@
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { desc, eq } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
 import PinArchiveButtons from "@/components/pin-archive-buttons"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
-import { playlistItems as playlistItemsTable, playlists as playlistsTable, playlistVersions } from "@/lib/db/schema"
+import { playlists as playlistsTable } from "@/lib/db/schema"
 import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
@@ -18,96 +18,44 @@ type PlaylistPageProps = {
 
 export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const session = await auth()
-  const offline = Boolean(process.env.OFFLINE)
-
-  if (!session && !offline) {
+  if (!session) {
     redirect("/login")
   }
 
   const { playlistId } = await params
 
-  let playlistName: string
-  let description: string | undefined
-  let coverUrl: string | undefined
-  let trackCount: number
-  let owned: boolean
+  const [playlistResponse, meResponse, dbRow] = await Promise.all([
+    spotifyFetch(`/playlists/${playlistId}`),
+    spotifyFetch("/me"),
+    db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
+  ])
+
+  const playlist = (await playlistResponse.json()) as {
+    name: string
+    description?: string
+    owner?: { id: string }
+    tracks?: { total: number }
+    images?: { url: string; height?: number | null; width?: number | null }[]
+  }
+  const me = (await meResponse.json()) as { id: string }
+
+  const playlistName = playlist.name
+  const description = playlist.description?.trim()
+  const coverUrl = spotifyThumbnailUrl(playlist.images, 200)
+  const trackCount = playlist.tracks?.total ?? 0
+  const owned = playlist.owner?.id === me.id
+  const pinnedVal = dbRow?.pinned ?? 0
+  const archivedVal = dbRow?.archived ?? 0
+
   let items: PlaylistItem[]
   let snapshotId: string | undefined
-  let pinnedVal: number
-  let archivedVal: number
 
-  if (offline) {
-    const [dbPlaylist, latestVersion] = await Promise.all([
-      db.select().from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
-      db
-        .select()
-        .from(playlistVersions)
-        .where(eq(playlistVersions.playlistId, playlistId))
-        .orderBy(desc(playlistVersions.major), desc(playlistVersions.minor))
-        .limit(1)
-        .get(),
-    ])
-
-    if (!dbPlaylist) redirect("/playlists")
-
-    const dbItems = latestVersion
-      ? await db
-          .select()
-          .from(playlistItemsTable)
-          .where(eq(playlistItemsTable.versionId, latestVersion.id))
-          .orderBy(playlistItemsTable.position)
-          .all()
-      : []
-
-    playlistName = dbPlaylist.name
-    description = latestVersion?.description ?? undefined
-    coverUrl = dbPlaylist.coverUrl ?? undefined
-    trackCount = dbPlaylist.trackCount ?? dbItems.length
-    owned = true
-    snapshotId = latestVersion?.snapshotId
-    pinnedVal = dbPlaylist.pinned
-    archivedVal = dbPlaylist.archived
-    items = dbItems.map((item) => ({
-      added_at: item.addedAt ?? undefined,
-      track: {
-        id: item.trackId,
-        name: item.trackName,
-        uri: item.trackUri,
-        duration_ms: item.durationMs ?? undefined,
-        artists: item.artists ? item.artists.split(",").map((a) => ({ name: a.trim() })) : [],
-      },
-    }))
+  if (owned) {
+    const itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
+    items = itemsData.items ?? []
+    snapshotId = itemsData.snapshot_id
   } else {
-    const [playlistResponse, meResponse, dbRow] = await Promise.all([
-      spotifyFetch(`/playlists/${playlistId}`),
-      spotifyFetch("/me"),
-      db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
-    ])
-
-    const playlist = (await playlistResponse.json()) as {
-      name: string
-      description?: string
-      owner?: { id: string }
-      tracks?: { total: number }
-      images?: { url: string; height?: number | null; width?: number | null }[]
-    }
-    const me = (await meResponse.json()) as { id: string }
-
-    playlistName = playlist.name
-    description = playlist.description?.trim()
-    coverUrl = spotifyThumbnailUrl(playlist.images, 200)
-    trackCount = playlist.tracks?.total ?? 0
-    owned = playlist.owner?.id === me.id
-    pinnedVal = dbRow?.pinned ?? 0
-    archivedVal = dbRow?.archived ?? 0
-
-    if (owned) {
-      const itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
-      items = itemsData.items ?? []
-      snapshotId = itemsData.snapshot_id
-    } else {
-      items = []
-    }
+    items = []
   }
 
   const totalDurationMs = owned ? sumTrackDurationMs(items) : 0
