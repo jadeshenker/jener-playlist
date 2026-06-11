@@ -45,10 +45,12 @@ function EmptyPlaylists({border}: {border?: boolean}) {
 
 function PlaylistTable({
   playlists,
+  showActions,
   onTogglePin,
   onToggleArchive,
 }: {
   playlists: PlaylistWithMeta[]
+  showActions: boolean
   onTogglePin: (id: string, name: string, current: boolean) => void
   onToggleArchive: (id: string, name: string, current: boolean) => void
 }) {
@@ -59,14 +61,14 @@ function PlaylistTable({
         <col />
         <col style={{ width: 80 }} />
         <col style={{ width: 130 }} />
-        <col style={{ width: 200 }} />
+        {showActions && <col style={{ width: 200 }} />}
       </colgroup>
       <thead>
         <tr style={{ background: HEADER_BG }}>
           <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>playlist</th>
           <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>tracks</th>
           <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>created <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
-          <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>
+          {showActions && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
         </tr>
       </thead>
       <tbody>
@@ -89,16 +91,18 @@ function PlaylistTable({
             <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", whiteSpace: "nowrap" }}>
               {playlist.dateCreated ? formatAddedAt(playlist.dateCreated) : "—"}
             </td>
-            <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
-              <span style={{ display: "inline-flex", gap: 8 }}>
-                <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={actionBtnStyle}>
-                  {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
-                </button>
-                <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={actionBtnStyle}>
-                  {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
-                </button>
-              </span>
-            </td>
+            {showActions && (
+              <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
+                <span style={{ display: "inline-flex", gap: 8 }}>
+                  <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={actionBtnStyle}>
+                    {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
+                  </button>
+                  <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={actionBtnStyle}>
+                    {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
+                  </button>
+                </span>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
@@ -111,10 +115,12 @@ function PlaylistTable({
 
 function PlaylistListView({
   playlists,
+  showActions,
   onTogglePin,
   onToggleArchive,
 }: {
   playlists: PlaylistWithMeta[]
+  showActions: boolean
   onTogglePin: (id: string, name: string, current: boolean) => void
   onToggleArchive: (id: string, name: string, current: boolean) => void
 }) {
@@ -137,14 +143,16 @@ function PlaylistListView({
               </div>
             </div>
           </Link>
-          <span style={{ display: "inline-flex", flexDirection: "column", gap: 4, flexShrink: 0, alignItems: "flex-end" }}>
-            <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={{ ...actionBtnStyle, fontSize: 12 }}>
-              {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
-            </button>
-            <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={{ ...actionBtnStyle, fontSize: 12 }}>
-              {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
-            </button>
-          </span>
+          {showActions && (
+            <span style={{ display: "inline-flex", flexDirection: "column", gap: 4, flexShrink: 0, alignItems: "flex-end" }}>
+              <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={{ ...actionBtnStyle, fontSize: 12 }}>
+                {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
+              </button>
+              <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={{ ...actionBtnStyle, fontSize: 12 }}>
+                {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
+              </button>
+            </span>
+          )}
         </li>
       )) : <EmptyPlaylists />}
     </ul>
@@ -152,7 +160,7 @@ function PlaylistListView({
   )
 }
 
-export default function PlaylistList({ playlists: initial }: { playlists: PlaylistWithMeta[] }) {
+export default function PlaylistList({ playlists: initial, showActions = true }: { playlists: PlaylistWithMeta[]; showActions?: boolean }) {
   const [playlists, setPlaylists] = useState(initial)
   const [query, setQuery] = useState("")
   const [archivedOpen, setArchivedOpen] = useState(false)
@@ -176,6 +184,7 @@ export default function PlaylistList({ playlists: initial }: { playlists: Playli
   const sorted = [...active.filter((p) => p.pinned), ...active.filter((p) => !p.pinned)]
 
   const listProps = {
+    showActions,
     onTogglePin: (id: string, name: string, current: boolean) => toggle(id, name, { pinned: !current }),
     onToggleArchive: (id: string, name: string, current: boolean) => toggle(id, name, { archived: !current }),
   }

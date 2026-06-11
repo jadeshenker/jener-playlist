@@ -57,7 +57,7 @@ export default async function PlaylistsPage() {
           {session ? <SignOutButton /> : <SignInButton label="sign in" />}
         </div>
       </div>
-      <PlaylistList playlists={playlists} />
+      <PlaylistList playlists={playlists} showActions={!!session} />
     </main>
   )
 }

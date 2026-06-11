@@ -111,9 +111,39 @@ async function fetchTrackCovers(token: string, trackIds: string[]): Promise<Map<
   return coverByTrackId
 }
 
+async function resyncCovers(token: string) {
+  const allPlaylists = await db.select({ id: playlists.id, name: playlists.name }).from(playlists)
+  console.log(`Re-syncing cover images for ${allPlaylists.length} playlists...\n`)
+
+  for (const playlist of allPlaylists) {
+    const data = await spotifyGet<{ images?: { url: string; height?: number | null; width?: number | null }[]; tracks?: { total: number } }>(
+      token,
+      `/playlists/${playlist.id}?fields=images,tracks(total)`
+    )
+    const coverUrl = spotifyThumbnailUrl(data.images, 200) ?? null
+    const trackCount = data.tracks?.total ?? null
+
+    await db
+      .update(playlists)
+      .set({ coverUrl, trackCount, updatedAt: Date.now() })
+      .where(eq(playlists.id, playlist.id))
+
+    console.log(`  ✓ ${playlist.name}: ${coverUrl ?? "no cover"}`)
+  }
+
+  console.log("\nDone!")
+}
+
 async function main() {
+  const args = process.argv.slice(2)
+
   const token = await getAccessToken()
   console.log("Got Spotify access token")
+
+  if (args.includes("--resync-covers")) {
+    await resyncCovers(token)
+    process.exit(0)
+  }
 
   const me = await spotifyGet<{ id: string }>(token, "/me")
   console.log(`Logged in as Spotify user: ${me.id}`)

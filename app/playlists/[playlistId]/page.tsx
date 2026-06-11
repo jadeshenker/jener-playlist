@@ -9,7 +9,7 @@ import SyncButton from "@/components/sync-button"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
 import { playlistItems as playlistItemsTable, playlists as playlistsTable, playlistVersions } from "@/lib/db/schema"
-import { formatDurationMs, sumTrackDurationMs } from "@/lib/format"
+import { formatAddedAt, formatDurationMs, sumTrackDurationMs } from "@/lib/format"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import { fetchAllPlaylistItems, spotifyFetch } from "@/lib/spotify"
 import { ChevronLeft } from 'pixelarticons/react'
@@ -32,12 +32,13 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
   let snapshotId: string | undefined = undefined
   let pinnedVal: number
   let archivedVal: number
+  let dateCreated: string | null = null
 
   if (session) {
     const [playlistResponse, meResponse, dbRow] = await Promise.all([
       spotifyFetch(`/playlists/${playlistId}`),
       spotifyFetch("/me"),
-      db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
+      db.select({ pinned: playlistsTable.pinned, archived: playlistsTable.archived, dateCreated: playlistsTable.dateCreated }).from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
     ])
 
     const playlist = (await playlistResponse.json()) as {
@@ -56,14 +57,11 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     owned = playlist.owner?.id === me.id
     pinnedVal = dbRow?.pinned ?? 0
     archivedVal = dbRow?.archived ?? 0
+    dateCreated = dbRow?.dateCreated ?? null
 
-    if (owned) {
-      const itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
-      items = itemsData.items ?? []
-      snapshotId = itemsData.snapshot_id
-    } else {
-      items = []
-    }
+    const itemsData = await fetchAllPlaylistItems<PlaylistItem>(playlistId)
+    items = itemsData.items ?? []
+    if (owned) snapshotId = itemsData.snapshot_id
   } else {
     const [dbPlaylist, latestVersion] = await Promise.all([
       db.select().from(playlistsTable).where(eq(playlistsTable.id, playlistId)).get(),
@@ -90,6 +88,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     playlistName = dbPlaylist.name
     description = latestVersion?.description ?? undefined
     coverUrl = dbPlaylist.coverUrl ?? undefined
+    dateCreated = dbPlaylist.dateCreated ?? null
     trackCount = dbPlaylist.trackCount ?? dbItems.length
     owned = true
     pinnedVal = dbPlaylist.pinned
@@ -107,7 +106,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     }))
   }
 
-  const totalDurationMs = owned ? sumTrackDurationMs(items) : 0
+  const totalDurationMs = sumTrackDurationMs(items)
 
   return (
     <main>
@@ -133,9 +132,9 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
         ) : null}
         <div>
           <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>{playlistName}</h1>
-          <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14 }}>
-            {trackCount} tracks
-            {totalDurationMs > 0 ? <> · {formatDurationMs(totalDurationMs)}</> : null}
+          <p style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}>
+            {dateCreated && <span style={{fontWeight: 600}}>{formatAddedAt(dateCreated)} · </span>}{trackCount} tracks
+            {totalDurationMs > 0 ? <>, {formatDurationMs(totalDurationMs)}</> : null}
           </p>
           {description ? (
             <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14, lineHeight: 1.5, maxWidth: 560, whiteSpace: "pre-wrap", color: "#9461fb" }}>
@@ -153,18 +152,12 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
         </div>
       </div>
 
-      {owned ? (
-        <PlaylistEditor
-          playlistId={playlistId}
-          initialItems={items}
-          initialSnapshotId={snapshotId}
-          readOnly={!session}
-        />
-      ) : (
-        <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", border: "1px solid #c4b5fd", borderRadius: 6, background: "#ede9fe", fontSize: 14 }}>
-          <p style={{ margin: 0 }}>this isn&apos;t your playlist — you can only edit playlists you own</p>
-        </div>
-      )}
+      <PlaylistEditor
+        playlistId={playlistId}
+        initialItems={items}
+        initialSnapshotId={snapshotId}
+        readOnly={!session || !owned}
+      />
     </main>
   )
 }

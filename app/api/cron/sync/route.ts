@@ -99,7 +99,7 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
       id: item.id,
       name: item.name,
       latestSnapshotId: item.snapshot_id,
-      coverUrl: spotifyThumbnailUrl(item.images, 56) ?? null,
+      coverUrl: spotifyThumbnailUrl(item.images, 200) ?? null,
       trackCount: item.tracks?.total ?? null,
       pinned: 0,
       archived: 0,
@@ -202,7 +202,7 @@ export async function POST(request: Request) {
         const now = Date.now()
         const description = spotifyPlaylist.description?.trim() || null
 
-        const coverUrl = spotifyThumbnailUrl(spotifyPlaylist.images, 56) ?? null
+        const coverUrl = spotifyThumbnailUrl(spotifyPlaylist.images, 200) ?? null
         const trackCount = spotifyPlaylist.tracks?.total ?? null
 
         // Always update the stored snapshot_id, name, cover, and track count
