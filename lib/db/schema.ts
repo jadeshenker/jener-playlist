@@ -44,4 +44,5 @@ export const playlistItems = sqliteTable("playlist_items", {
   durationMs: integer("duration_ms"),
   artists: text("artists"), // comma-separated
   addedAt: text("added_at"), // ISO string from Spotify
+  albumCoverUrl: text("album_cover_url"),
 })
