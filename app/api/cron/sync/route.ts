@@ -70,17 +70,32 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
   const existing = new Set(
     (await db.select({ id: playlists.id }).from(playlists)).map((p) => p.id)
   )
-  const toAdd: { id: string; name: string; latestSnapshotId: string; coverUrl: string | null; trackCount: number | null; pinned: number; archived: number; dateCreated: string | null; createdAt: number; updatedAt: number }[] = []
   const now = Date.now()
+  const added: string[] = []
+
   for (const item of page.items ?? []) {
     if (existing.has(item.id)) break
     if (!item.tracks?.total) continue
+
     const rawItems = await fetchAllPages<SpotifyPlaylistItem>(token, `/playlists/${item.id}/items?limit=100`)
-    const addedDates = rawItems
-      .filter((i) => i.track?.uri?.startsWith("spotify:track:") && i.added_at)
-      .map((i) => i.added_at!)
+
+    const tracks = rawItems
+      .filter((i) => i.track?.uri?.startsWith("spotify:track:"))
+      .map((i, pos) => ({
+        position: pos,
+        trackId: i.track!.id,
+        trackUri: i.track!.uri,
+        trackName: i.track!.name,
+        durationMs: i.track!.duration_ms ?? null,
+        artists: i.track!.artists?.map((a) => a.name).join(", ") ?? null,
+        addedAt: i.added_at ?? null,
+        albumCoverUrl: spotifyThumbnailUrl(i.track!.album?.images, 64) ?? null,
+      }))
+
+    const addedDates = tracks.filter((t) => t.addedAt).map((t) => t.addedAt!)
     const dateCreated = addedDates.length > 0 ? addedDates.sort()[0].slice(0, 10) : null
-    toAdd.push({
+
+    await db.insert(playlists).values({
       id: item.id,
       name: item.name,
       latestSnapshotId: item.snapshot_id,
@@ -92,9 +107,30 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
       createdAt: now,
       updatedAt: now,
     })
+
+    const hash = contentHash(tracks.map((t) => t.trackUri).sort())
+    const [newVersion] = await db
+      .insert(playlistVersions)
+      .values({
+        playlistId: item.id,
+        major: 1,
+        minor: 0,
+        snapshotId: item.snapshot_id,
+        contentHash: hash,
+        name: item.name,
+        description: item.description?.trim() || null,
+        createdAt: now,
+      })
+      .returning()
+
+    if (tracks.length > 0) {
+      await db.insert(playlistItems).values(tracks.map((t) => ({ versionId: newVersion.id, ...t })))
+    }
+
+    added.push(item.name)
   }
-  if (toAdd.length > 0) await db.insert(playlists).values(toAdd)
-  return toAdd.map((p) => p.name)
+
+  return added
 }
 
 export async function POST(request: Request) {

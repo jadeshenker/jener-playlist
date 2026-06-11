@@ -19,6 +19,12 @@ body {
   color: #6d28d9;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 a {
   color: blue;
   text-decoration: underline;

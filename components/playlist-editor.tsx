@@ -318,7 +318,7 @@ export default function PlaylistEditor({
           )}
 
           {isNarrow ? (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
               {filteredSongs.length === 0 ? (
                 <li style={{ padding: "12px", background: "white", color: "#888", fontSize: 13 }}>
                   {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
@@ -366,17 +366,17 @@ export default function PlaylistEditor({
             <thead>
               <tr style={{ background: HEADER_BG }}>
                 {!readOnly && (
-                  <th style={{ textAlign: "center", padding: "8px 12px", borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+                  <th style={{ textAlign: "center", padding: "8px 12px", borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
                     <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
                       {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
                     </button>
                   </th>
                 )}
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
+                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
+                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
                 {!readOnly && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
               </tr>
             </thead>

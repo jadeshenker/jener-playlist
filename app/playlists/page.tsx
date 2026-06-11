@@ -51,9 +51,9 @@ export default async function PlaylistsPage() {
   return (
     <main>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-        <h1 style={{ fontSize: 18, margin: 0 }}>playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
+        <h1 style={{ fontSize: 18, margin: 0, color: "blue" }}> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
         <div style={{ display: "flex", gap: 8 }}>
-          <SyncButton />
+          {session && <SyncButton />}
           {session ? <SignOutButton /> : <SignInButton label="sign in" />}
         </div>
       </div>

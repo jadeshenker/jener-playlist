@@ -115,8 +115,10 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
         <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 13, textDecoration: "none" }}>
           [ <ChevronLeft style={{ width: 14, height: 14 }} /> back to playlists ]
         </Link>
-        {session ? <SignOutButton /> : <SignInButton label="sign in" />}
-        <SyncButton playlistId={playlistId} />
+        <div style={{ display: "flex", gap: 8 }}>
+          {session && <SyncButton playlistId={playlistId} />}
+          {session ? <SignOutButton /> : <SignInButton label="sign in" />}
+        </div>
       </div>
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginTop: "1.25rem", marginBottom: "1.5rem" }}>
