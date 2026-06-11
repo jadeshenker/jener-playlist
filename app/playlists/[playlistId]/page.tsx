@@ -1,10 +1,11 @@
 import Image from "next/image"
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { desc, eq } from "drizzle-orm"
 import PlaylistEditor, { type PlaylistItem } from "@/components/playlist-editor"
 import PinArchiveButtons from "@/components/pin-archive-buttons"
 import { SignInButton, SignOutButton } from "@/components/auth-button"
+import SyncButton from "@/components/sync-button"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
 import { playlistItems as playlistItemsTable, playlists as playlistsTable, playlistVersions } from "@/lib/db/schema"
@@ -115,6 +116,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
           [ <ChevronLeft style={{ width: 14, height: 14 }} /> back to playlists ]
         </Link>
         {session ? <SignOutButton /> : <SignInButton label="sign in" />}
+        <SyncButton playlistId={playlistId} />
       </div>
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginTop: "1.25rem", marginBottom: "1.5rem" }}>
