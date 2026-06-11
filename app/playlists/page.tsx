@@ -4,6 +4,7 @@ import { db } from "@/lib/db/index"
 import { playlists as playlistsTable } from "@/lib/db/schema"
 import PlaylistList, { type PlaylistWithMeta } from "@/components/playlist-list"
 import { SignInButton, SignOutButton } from "@/components/auth-button"
+import SyncButton from "@/components/sync-button"
 
 interface PlaylistRow {
     id: string;
@@ -50,8 +51,11 @@ export default async function PlaylistsPage() {
   return (
     <main>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-        <h1 style={{ fontSize: 18, margin: 0 }}>playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
-        {session ? <SignOutButton /> : <SignInButton label="sign in" />}
+        <h1 style={{ fontSize: 18, margin: 0, color: "blue" }}> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          {session && <SyncButton />}
+          {session ? <SignOutButton /> : <SignInButton label="sign in" />}
+        </div>
       </div>
       <PlaylistList playlists={playlists} />
     </main>

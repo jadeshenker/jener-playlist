@@ -1,31 +1,12 @@
 import { createHash } from "node:crypto"
 import { desc, eq, and } from "drizzle-orm"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
 import { playlists, playlistVersions, playlistItems } from "@/lib/db/schema"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 
 const SPOTIFY_API = "https://api.spotify.com/v1"
-
-async function getAccessToken(): Promise<string> {
-  const { AUTH_SPOTIFY_ID, AUTH_SPOTIFY_SECRET, SPOTIFY_REFRESH_TOKEN } = process.env
-  if (!AUTH_SPOTIFY_ID || !AUTH_SPOTIFY_SECRET || !SPOTIFY_REFRESH_TOKEN) {
-    throw new Error("Missing Spotify credentials in env")
-  }
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(`${AUTH_SPOTIFY_ID}:${AUTH_SPOTIFY_SECRET}`).toString("base64")}`,
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: SPOTIFY_REFRESH_TOKEN,
-    }),
-  })
-  if (!res.ok) throw new Error(`Token exchange failed: ${await res.text()}`)
-  return ((await res.json()) as { access_token: string }).access_token
-}
 
 async function spotifyGet<T>(token: string, path: string): Promise<T> {
   const res = await fetch(`${SPOTIFY_API}${path}`, {
@@ -89,17 +70,32 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
   const existing = new Set(
     (await db.select({ id: playlists.id }).from(playlists)).map((p) => p.id)
   )
-  const toAdd: { id: string; name: string; latestSnapshotId: string; coverUrl: string | null; trackCount: number | null; pinned: number; archived: number; dateCreated: string | null; createdAt: number; updatedAt: number }[] = []
   const now = Date.now()
+  const added: string[] = []
+
   for (const item of page.items ?? []) {
     if (existing.has(item.id)) break
     if (!item.tracks?.total) continue
+
     const rawItems = await fetchAllPages<SpotifyPlaylistItem>(token, `/playlists/${item.id}/items?limit=100`)
-    const addedDates = rawItems
-      .filter((i) => i.track?.uri?.startsWith("spotify:track:") && i.added_at)
-      .map((i) => i.added_at!)
+
+    const tracks = rawItems
+      .filter((i) => i.track?.uri?.startsWith("spotify:track:"))
+      .map((i, pos) => ({
+        position: pos,
+        trackId: i.track!.id,
+        trackUri: i.track!.uri,
+        trackName: i.track!.name,
+        durationMs: i.track!.duration_ms ?? null,
+        artists: i.track!.artists?.map((a) => a.name).join(", ") ?? null,
+        addedAt: i.added_at ?? null,
+        albumCoverUrl: spotifyThumbnailUrl(i.track!.album?.images, 64) ?? null,
+      }))
+
+    const addedDates = tracks.filter((t) => t.addedAt).map((t) => t.addedAt!)
     const dateCreated = addedDates.length > 0 ? addedDates.sort()[0].slice(0, 10) : null
-    toAdd.push({
+
+    await db.insert(playlists).values({
       id: item.id,
       name: item.name,
       latestSnapshotId: item.snapshot_id,
@@ -111,38 +107,60 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
       createdAt: now,
       updatedAt: now,
     })
+
+    const hash = contentHash(tracks.map((t) => t.trackUri).sort())
+    const [newVersion] = await db
+      .insert(playlistVersions)
+      .values({
+        playlistId: item.id,
+        major: 1,
+        minor: 0,
+        snapshotId: item.snapshot_id,
+        contentHash: hash,
+        name: item.name,
+        description: item.description?.trim() || null,
+        createdAt: now,
+      })
+      .returning()
+
+    if (tracks.length > 0) {
+      await db.insert(playlistItems).values(tracks.map((t) => ({ versionId: newVersion.id, ...t })))
+    }
+
+    added.push(item.name)
   }
-  if (toAdd.length > 0) await db.insert(playlists).values(toAdd)
-  return toAdd.map((p) => p.name)
+
+  return added
 }
 
-export async function POST(request: NextRequest) {
-  console.log("[CRON] Sync request received")
-
-  if (request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.error("[CRON] Authorization failed")
+export async function POST(request: Request) {
+  const session = await auth()
+  if (!session?.accessToken || session.error === "RefreshTokenError") {
     return new Response("Unauthorized", { status: 401 })
   }
-  console.log("[CRON] Authorization passed")
+  const token = session.accessToken
 
-  let token: string
+  let targetId: string | null = null
   try {
-    console.log("[CRON] Fetching Spotify access token...")
-    token = await getAccessToken()
-    console.log("[CRON] Access token obtained successfully")
-  } catch (err) {
-    console.error("[CRON] Failed to get access token:", err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
-  }
+    const body = await request.json() as { playlistId?: string }
+    targetId = body.playlistId ?? null
+  } catch { /* no body — sync all */ }
 
   try {
-    console.log("[CRON] Discovering new playlists...")
-    const discovered = await discoverNewPlaylists(token)
-    console.log("[CRON] Discovered playlists:", discovered)
+    let discovered: string[] = []
+    let tracked: (typeof playlists.$inferSelect)[]
 
-    console.log("[CRON] Fetching tracked playlists...")
-    const tracked = await db.select().from(playlists)
-    console.log(`[CRON] Found ${tracked.length} tracked playlists`)
+    if (targetId) {
+      const row = await db.select().from(playlists).where(eq(playlists.id, targetId)).get()
+      tracked = row ? [row] : []
+    } else {
+      console.log("[CRON] Discovering new playlists...")
+      discovered = await discoverNewPlaylists(token)
+      console.log("[CRON] Discovered playlists:", discovered)
+      tracked = await db.select().from(playlists).where(eq(playlists.archived, 0))
+    }
+
+    console.log(`[CRON] Syncing ${tracked.length} playlists`)
 
     const results: SyncResult[] = []
 

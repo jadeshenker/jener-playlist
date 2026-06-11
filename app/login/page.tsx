@@ -1,15 +1,20 @@
+import Link from "next/link"
+import { ChevronRight } from "pixelarticons/react"
 import { SignInButton } from "@/components/auth-button"
 
 export default function LoginPage() {
   return (
-    <main style={{ 
+    <main style={{
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      minHeight: "100vh",
+      flex: 1,
       padding: "3rem 1.5rem",
       gap: "10px" }}>
+        <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 13, textDecoration: "none", position: "fixed", top: "1.25rem", right: "1.25rem" }}>
+          [ continue without logging in <ChevronRight style={{ width: 14, height: 14 }} /> ]
+        </Link>
         <p>₍^. .^₎⟆</p>
         <SignInButton />
         <p style={{
