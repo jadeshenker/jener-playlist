@@ -1,6 +1,6 @@
 import { signIn, signOut } from "@/lib/auth"
 
-export async function SignInButton() {
+export async function SignInButton({ label = "continue with spotify" }: { label?: string } = {}) {
   return (
     <form
       action={async () => {
@@ -8,11 +8,7 @@ export async function SignInButton() {
         await signIn("spotify", { redirectTo: "/playlists" })
       }}
     >
-      <button
-        className="contained"
-      >
-        continue with spotify
-      </button>
+      <button className="contained">{label}</button>
     </form>
   )
 }

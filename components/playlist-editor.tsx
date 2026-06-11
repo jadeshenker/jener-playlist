@@ -28,10 +28,12 @@ export default function PlaylistEditor({
   playlistId,
   initialItems,
   initialSnapshotId,
+  readOnly = false,
 }: {
   playlistId: string
   initialItems: PlaylistItem[]
   initialSnapshotId?: string
+  readOnly?: boolean
 }) {
   const [items, setItems] = useState(initialItems)
   const [snapshotId, setSnapshotId] = useState(initialSnapshotId)
@@ -303,15 +305,17 @@ export default function PlaylistEditor({
             </p>
           ) : null}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", padding: "0.5rem 0", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
-            <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
-            <button onClick={() => void removeSelectedItems()} disabled={selected.size === 0 || isSaving} style={actionBtnStyle(selected.size === 0 || isSaving)}>
-              [ remove {selected.size} ]
-            </button>
-            <button onClick={() => setSelected(new Set())} disabled={selected.size === 0} style={actionBtnStyle(selected.size === 0)}>
-              [ clear ]
-            </button>
-          </div>
+          {!readOnly && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", padding: "0.5rem 0", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
+              <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
+              <button onClick={() => void removeSelectedItems()} disabled={selected.size === 0 || isSaving} style={actionBtnStyle(selected.size === 0 || isSaving)}>
+                [ remove {selected.size} ]
+              </button>
+              <button onClick={() => setSelected(new Set())} disabled={selected.size === 0} style={actionBtnStyle(selected.size === 0)}>
+                [ clear ]
+              </button>
+            </div>
+          )}
 
           {isNarrow ? (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
@@ -322,9 +326,11 @@ export default function PlaylistEditor({
               ) : null}
               {filteredSongs.map((item) => (
                 <li key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
-                  <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, flexShrink: 0, lineHeight: 0 }}>
-                    {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
-                  </button>
+                  {!readOnly && (
+                    <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, flexShrink: 0, lineHeight: 0 }}>
+                      {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                    </button>
+                  )}
                   {item.albumCoverUrl ? (
                     <Image src={item.albumCoverUrl} alt="" width={40} height={40} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
                   ) : (
@@ -336,55 +342,61 @@ export default function PlaylistEditor({
                       {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
                     </div>
                   </div>
-                  <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move up"><ChevronUp style={{ width: 28, height: 28, display: "block" }} /></button>
-                    <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === items.length - 1 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === items.length - 1 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move down"><ChevronDown style={{ width: 28, height: 28, display: "block" }} /></button>
-                    {!isXSmall && <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ background: "none", border: "none", cursor: isSaving ? "default" : "pointer", padding: 0, color: isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="remove"><Delete style={{ width: 26, height: 26, display: "block" }} /></button>}
-                  </span>
+                  {!readOnly && (
+                    <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move up"><ChevronUp style={{ width: 28, height: 28, display: "block" }} /></button>
+                      <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === items.length - 1 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === items.length - 1 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move down"><ChevronDown style={{ width: 28, height: 28, display: "block" }} /></button>
+                      {!isXSmall && <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ background: "none", border: "none", cursor: isSaving ? "default" : "pointer", padding: 0, color: isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="remove"><Delete style={{ width: 26, height: 26, display: "block" }} /></button>}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
           ) : (
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
             <colgroup>
-              <col style={{ width: 44 }} />
+              {!readOnly && <col style={{ width: 44 }} />}
               <col style={{ width: 44 }} />
               <col />
               <col style={{ width: 210 }} />
               <col style={{ width: 140 }} />
               <col style={{ width: 105 }} />
-              <col style={{ width: 130 }} />
+              {!readOnly && <col style={{ width: 130 }} />}
             </colgroup>
             <thead>
               <tr style={{ background: HEADER_BG }}>
-                <th style={{ textAlign: "center", padding: "8px 12px", borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-                  <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
-                    {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
-                  </button>
-                </th>
+                {!readOnly && (
+                  <th style={{ textAlign: "center", padding: "8px 12px", borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+                    <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                      {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                    </button>
+                  </th>
+                )}
                 <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
                 <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
                 <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
                 <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
                 <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>
+                {!readOnly && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredSongs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
+                  <td colSpan={readOnly ? 5 : 7} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
                     {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
                   </td>
                 </tr>
               ) : null}
               {filteredSongs.map((item) => (
                 <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white" }}>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
-                    <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
-                      {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
-                    </button>
-                  </td>
+                  {!readOnly && (
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
+                      <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                        {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                      </button>
+                    </td>
+                  )}
                   <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888" }}>
                     {item.itemsIndex + 1}
                   </td>
@@ -407,13 +419,15 @@ export default function PlaylistEditor({
                   <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
                     {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
                   </td>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
-                    <span style={{ display: "inline-flex", gap: 10 }}>
-                      <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
-                      <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
-                      <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
-                    </span>
-                  </td>
+                  {!readOnly && (
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
+                      <span style={{ display: "inline-flex", gap: 10 }}>
+                        <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
+                        <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
+                        <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
+                      </span>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

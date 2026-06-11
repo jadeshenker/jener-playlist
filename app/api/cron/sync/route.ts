@@ -74,6 +74,7 @@ type SpotifyPlaylistItem = {
     uri: string
     duration_ms?: number
     artists?: { name: string }[]
+    album?: { images?: { url: string; height?: number | null; width?: number | null }[] }
   } | null
 }
 
@@ -176,6 +177,7 @@ export async function POST(request: NextRequest) {
             durationMs: item.track!.duration_ms ?? null,
             artists: item.track!.artists?.map((a) => a.name).join(", ") ?? null,
             addedAt: item.added_at ?? null,
+            albumCoverUrl: spotifyThumbnailUrl(item.track!.album?.images, 64) ?? null,
           }))
 
         const hash = contentHash(tracks.map((t) => t.trackUri).sort())
