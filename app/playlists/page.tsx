@@ -7,19 +7,19 @@ import { SignInButton, SignOutButton } from "@/components/auth-button"
 import SyncButton from "@/components/sync-button"
 
 interface PlaylistRow {
-    id: string;
-    name: string;
-    coverUrl: string | null;
-    trackCount: number | null;
-    pinned: number;
-    archived: number;
-    dateCreated: string | null;
+  id: string
+  name: string
+  coverUrl: string | null
+  trackCount: number | null
+  pinned: number
+  archived: number
+  dateCreated: string | null
 }
 
 export default async function PlaylistsPage() {
   const session = await auth()
 
-  let rows: PlaylistRow[];
+  let rows: PlaylistRow[]
 
   try {
     rows = await db
@@ -50,7 +50,17 @@ export default async function PlaylistsPage() {
 
   return (
     <main>
-      <div className="mobile-pad" style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 28 }}>
+      <div
+        className="mobile-pad"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 28,
+        }}
+      >
         <h1 style={{ fontSize: 18, margin: 0, color: "blue" }}> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
         <div style={{ display: "flex", gap: 8 }}>
           {session && <SyncButton />}

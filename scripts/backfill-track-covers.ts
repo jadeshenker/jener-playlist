@@ -52,7 +52,9 @@ async function main() {
     .where(isNull(playlistItems.albumCoverUrl))
 
   const uniqueTrackIds = [...new Set(rows.map((r) => r.trackId))]
-  console.log(`${rows.length} rows missing album cover across ${uniqueTrackIds.length} distinct tracks\n`)
+  console.log(
+    `${rows.length} rows missing album cover across ${uniqueTrackIds.length} distinct tracks\n`
+  )
 
   if (uniqueTrackIds.length === 0) {
     console.log("Nothing to do.")
@@ -68,7 +70,9 @@ async function main() {
       if (!track) continue
       coverByTrackId.set(track.id, spotifyThumbnailUrl(track.album?.images, 64) ?? null)
     }
-    console.log(`  Fetched ${Math.min(i + 50, uniqueTrackIds.length)} / ${uniqueTrackIds.length} tracks`)
+    console.log(
+      `  Fetched ${Math.min(i + 50, uniqueTrackIds.length)} / ${uniqueTrackIds.length} tracks`
+    )
   }
 
   // Group row IDs by the cover URL they should receive

@@ -16,7 +16,10 @@ export default function SyncButton({ playlistId }: { playlistId?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(playlistId ? { playlistId } : {}),
       })
-      if (res.status === 401) { setState("reauth"); return }
+      if (res.status === 401) {
+        setState("reauth")
+        return
+      }
       if (!res.ok) throw new Error()
       setState("done")
       setTimeout(() => setState("idle"), 4000)
@@ -48,7 +51,10 @@ export default function SyncButton({ playlistId }: { playlistId?: string }) {
             zIndex: 50,
           }}
         >
-          {state === "syncing" && (isSingle ? "syncing playlist — please don't close the page" : "syncing playlists — please don't close the page")}
+          {state === "syncing" &&
+            (isSingle
+              ? "syncing playlist — please don't close the page"
+              : "syncing playlists — please don't close the page")}
           {state === "done" && "sync complete"}
           {state === "error" && "sync failed — try again"}
           {state === "reauth" && "session expired — sign out and sign back in"}

@@ -8,9 +8,13 @@ import { SignInButton, SignOutButton } from "@/components/auth-button"
 import SyncButton from "@/components/sync-button"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db/index"
-import { playlistItems as playlistItemsTable, playlists as playlistsTable, playlistVersions } from "@/lib/db/schema"
+import {
+  playlistItems as playlistItemsTable,
+  playlists as playlistsTable,
+  playlistVersions,
+} from "@/lib/db/schema"
 import { formatAddedAt, formatDurationMs, sumTrackDurationMs } from "@/lib/format"
-import { ChevronLeft } from 'pixelarticons/react'
+import { ChevronLeft } from "pixelarticons/react"
 
 type PlaylistPageProps = {
   params: Promise<{ playlistId: string }>
@@ -59,8 +63,20 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
 
   return (
     <main>
-      <div className="mobile-pad" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Link href="/playlists" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 13, textDecoration: "none" }}>
+      <div
+        className="mobile-pad"
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      >
+        <Link
+          href="/playlists"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 2,
+            fontSize: 13,
+            textDecoration: "none",
+          }}
+        >
           [ <ChevronLeft style={{ width: 14, height: 14 }} /> back ]
         </Link>
         <div style={{ display: "flex", gap: 8 }}>
@@ -69,7 +85,16 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
         </div>
       </div>
 
-      <div className="mobile-pad" style={{ display: "flex", alignItems: "flex-start", gap: 20, marginTop: "1.25rem", marginBottom: "1.5rem" }}>
+      <div
+        className="mobile-pad"
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 20,
+          marginTop: "1.25rem",
+          marginBottom: "1.5rem",
+        }}
+      >
         {dbPlaylist.coverUrl ? (
           <Image
             src={dbPlaylist.coverUrl}
@@ -80,13 +105,28 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
           />
         ) : null}
         <div>
-          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>{dbPlaylist.name}</h1>
+          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>
+            {dbPlaylist.name}
+          </h1>
           <p style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}>
-            {dbPlaylist.dateCreated && <span style={{ fontWeight: 600 }}>{formatAddedAt(dbPlaylist.dateCreated)} · </span>}{trackCount} tracks
+            {dbPlaylist.dateCreated && (
+              <span style={{ fontWeight: 600 }}>{formatAddedAt(dbPlaylist.dateCreated)} · </span>
+            )}
+            {trackCount} tracks
             {totalDurationMs > 0 ? <>, {formatDurationMs(totalDurationMs)}</> : null}
           </p>
           {latestVersion?.description ? (
-            <p style={{ marginTop: 8, marginBottom: 0, fontSize: 14, lineHeight: 1.5, maxWidth: 560, whiteSpace: "pre-wrap", color: "#9461fb" }}>
+            <p
+              style={{
+                marginTop: 8,
+                marginBottom: 0,
+                fontSize: 14,
+                lineHeight: 1.5,
+                maxWidth: 560,
+                whiteSpace: "pre-wrap",
+                color: "#9461fb",
+              }}
+            >
               {latestVersion.description}
             </p>
           ) : null}

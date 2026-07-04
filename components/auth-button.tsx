@@ -21,11 +21,7 @@ export async function SignOutButton() {
         await signOut({ redirectTo: "/" })
       }}
     >
-      <button
-        className="contained"
-      >
-        sign out
-      </button>
+      <button className="contained">sign out</button>
     </form>
   )
 }

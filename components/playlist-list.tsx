@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { formatAddedAt } from "@/lib/format"
-import { ChevronDown, ChevronDown2, ChevronRight } from 'pixelarticons/react'
+import { ChevronDown, ChevronDown2, ChevronRight } from "pixelarticons/react"
 
 const PURPLE = "#6d28d9"
 const BORDER = "#c4b5fd"
@@ -20,7 +20,11 @@ export type PlaylistWithMeta = {
   dateCreated?: string | null
 }
 
-async function patchMeta(playlistId: string, name: string, patch: { pinned?: boolean; archived?: boolean }) {
+async function patchMeta(
+  playlistId: string,
+  name: string,
+  patch: { pinned?: boolean; archived?: boolean }
+) {
   await fetch(`/api/playlists/${playlistId}/meta`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -39,8 +43,21 @@ const actionBtnStyle: React.CSSProperties = {
   fontSize: 13,
 }
 
-function EmptyPlaylists({border}: {border?: boolean}) {
-  return <div style={{ padding: "12px", border: border ? `1px solid ${BORDER}` : 'none', fontSize: '14px', textAlign: 'center', borderTop: 'none', background: 'white' }}>no playlists. make one?</div>
+function EmptyPlaylists({ border }: { border?: boolean }) {
+  return (
+    <div
+      style={{
+        padding: "12px",
+        border: border ? `1px solid ${BORDER}` : "none",
+        fontSize: "14px",
+        textAlign: "center",
+        borderTop: "none",
+        background: "white",
+      }}
+    >
+      no playlists. make one?
+    </div>
+  )
 }
 
 function PlaylistTable({
@@ -56,60 +73,149 @@ function PlaylistTable({
 }) {
   return (
     <>
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
-      <colgroup>
-        <col />
-        <col style={{ width: 80 }} />
-        <col style={{ width: 130 }} />
-        {showActions && <col style={{ width: 200 }} />}
-      </colgroup>
-      <thead>
-        <tr style={{ background: HEADER_BG }}>
-          <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>playlist</th>
-          <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>tracks</th>
-          <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>created <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
-          {showActions && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, border: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {playlists.map((playlist) => (
-          <tr key={playlist.id} style={{ background: "white" }}>
-            <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>
-              <Link href={`/playlists/${playlist.id}`} style={{ display: "flex", alignItems: "center", gap: 10, color: PURPLE, textDecoration: "underline" }}>
-                {playlist.coverUrl ? (
-                  <Image src={playlist.coverUrl} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
-                ) : null}
-                <span>
-                  {playlist.pinned ? <span style={{ marginRight: 4, fontSize: 12 }}>📌</span> : null}
-                  {playlist.name}
-                </span>
-              </Link>
-            </td>
-            <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
-              {playlist.trackCount ?? 0}
-            </td>
-            <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", whiteSpace: "nowrap" }}>
-              {playlist.dateCreated ? formatAddedAt(playlist.dateCreated) : "—"}
-            </td>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}
+      >
+        <colgroup>
+          <col />
+          <col style={{ width: 80 }} />
+          <col style={{ width: 130 }} />
+          {showActions && <col style={{ width: 200 }} />}
+        </colgroup>
+        <thead>
+          <tr style={{ background: HEADER_BG }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: "8px 12px",
+                fontWeight: 500,
+                border: `1px solid ${BORDER}`,
+                color: PURPLE,
+              }}
+            >
+              playlist
+            </th>
+            <th
+              style={{
+                textAlign: "center",
+                padding: "8px 12px",
+                fontWeight: 500,
+                border: `1px solid ${BORDER}`,
+                color: PURPLE,
+              }}
+            >
+              tracks
+            </th>
+            <th
+              style={{
+                textAlign: "center",
+                padding: "8px 12px",
+                fontWeight: 500,
+                border: `1px solid ${BORDER}`,
+                color: PURPLE,
+              }}
+            >
+              created <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} />
+            </th>
             {showActions && (
-              <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
-                <span style={{ display: "inline-flex", gap: 8 }}>
-                  <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={actionBtnStyle}>
-                    {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
-                  </button>
-                  <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={actionBtnStyle}>
-                    {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
-                  </button>
-                </span>
-              </td>
+              <th
+                style={{
+                  textAlign: "center",
+                  padding: "8px 12px",
+                  fontWeight: 500,
+                  border: `1px solid ${BORDER}`,
+                  color: PURPLE,
+                }}
+              >
+                actions
+              </th>
             )}
           </tr>
-        ))}
-      </tbody>
-    </table>
-    {!playlists.length && <EmptyPlaylists border />}
+        </thead>
+        <tbody>
+          {playlists.map((playlist) => (
+            <tr key={playlist.id} style={{ background: "white" }}>
+              <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>
+                <Link
+                  href={`/playlists/${playlist.id}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    color: PURPLE,
+                    textDecoration: "underline",
+                  }}
+                >
+                  {playlist.coverUrl ? (
+                    <Image
+                      src={playlist.coverUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 4,
+                        objectFit: "cover",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
+                  <span>
+                    {playlist.pinned ? (
+                      <span style={{ marginRight: 4, fontSize: 12 }}>📌</span>
+                    ) : null}
+                    {playlist.name}
+                  </span>
+                </Link>
+              </td>
+              <td
+                style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}
+              >
+                {playlist.trackCount ?? 0}
+              </td>
+              <td
+                style={{
+                  padding: "8px 12px",
+                  border: `1px solid ${BORDER}`,
+                  textAlign: "center",
+                  color: "#888",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {playlist.dateCreated ? formatAddedAt(playlist.dateCreated) : "—"}
+              </td>
+              {showActions && (
+                <td
+                  style={{
+                    padding: "8px 12px",
+                    border: `1px solid ${BORDER}`,
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", gap: 8 }}>
+                    <button
+                      onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)}
+                      style={actionBtnStyle}
+                    >
+                      {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
+                    </button>
+                    <button
+                      onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)}
+                      style={actionBtnStyle}
+                    >
+                      {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
+                    </button>
+                  </span>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!playlists.length && <EmptyPlaylists border />}
     </>
-
   )
 }
 
@@ -126,65 +232,130 @@ function PlaylistListView({
 }) {
   return (
     <>
-    <ul style={{ listStyle: "none", padding: 0, margin: 0, borderTop: `1px solid ${BORDER}`, overflow: "hidden" }}>
-      {playlists.length ? playlists.map((playlist) => (
-        <li
-        key={playlist.id}
+      <ul
         style={{
-          background: "white",
-          borderBottom: `1px solid ${BORDER}`,
-          display: "grid",
-          gridTemplateColumns: showActions ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 12px",
-          width: "100%",
-          boxSizing: "border-box",
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+          borderTop: `1px solid ${BORDER}`,
+          overflow: "hidden",
         }}
       >
-          <Link
-  href={`/playlists/${playlist.id}`}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    color: PURPLE,
-    textDecoration: "none",
-    minWidth: 0,
-    overflow: "hidden",
-  }}
->
-            {playlist.coverUrl ? (
-              <Image src={playlist.coverUrl} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
-            ) : null}
-            <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-              <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "underline" }}>
-                {playlist.pinned ? <span style={{ marginRight: 4, fontSize: 12 }}>📌</span> : null}
-                {playlist.name}
-              </div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {playlist.trackCount ?? 0} tracks{playlist.dateCreated ? ` · ${formatAddedAt(playlist.dateCreated)}` : ""}
-              </div>
-            </div>
-          </Link>
-          {showActions && (
-            <span style={{ display: "inline-flex", flexDirection: "column", gap: 4, flexShrink: 0, alignItems: "flex-end" }}>
-              <button onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)} style={{ ...actionBtnStyle, fontSize: 12 }}>
-                {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
-              </button>
-              <button onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)} style={{ ...actionBtnStyle, fontSize: 12 }}>
-                {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
-              </button>
-            </span>
-          )}
-        </li>
-      )) : <EmptyPlaylists />}
-    </ul>
+        {playlists.length ? (
+          playlists.map((playlist) => (
+            <li
+              key={playlist.id}
+              style={{
+                background: "white",
+                borderBottom: `1px solid ${BORDER}`,
+                display: "grid",
+                gridTemplateColumns: showActions ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            >
+              <Link
+                href={`/playlists/${playlist.id}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  color: PURPLE,
+                  textDecoration: "none",
+                  minWidth: 0,
+                  overflow: "hidden",
+                }}
+              >
+                {playlist.coverUrl ? (
+                  <Image
+                    src={playlist.coverUrl}
+                    alt=""
+                    width={44}
+                    height={44}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 4,
+                      objectFit: "cover",
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : null}
+                <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {playlist.pinned ? (
+                      <span style={{ marginRight: 4, fontSize: 12 }}>📌</span>
+                    ) : null}
+                    {playlist.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#888",
+                      marginTop: 2,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {playlist.trackCount ?? 0} tracks
+                    {playlist.dateCreated ? ` · ${formatAddedAt(playlist.dateCreated)}` : ""}
+                  </div>
+                </div>
+              </Link>
+              {showActions && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    flexShrink: 0,
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <button
+                    onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)}
+                    style={{ ...actionBtnStyle, fontSize: 12 }}
+                  >
+                    {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
+                  </button>
+                  <button
+                    onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)}
+                    style={{ ...actionBtnStyle, fontSize: 12 }}
+                  >
+                    {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
+                  </button>
+                </span>
+              )}
+            </li>
+          ))
+        ) : (
+          <EmptyPlaylists />
+        )}
+      </ul>
     </>
   )
 }
 
-export default function PlaylistList({ playlists: initial, showActions = true }: { playlists: PlaylistWithMeta[]; showActions?: boolean }) {
+export default function PlaylistList({
+  playlists: initial,
+  showActions = true,
+}: {
+  playlists: PlaylistWithMeta[]
+  showActions?: boolean
+}) {
   const [playlists, setPlaylists] = useState(initial)
   const [query, setQuery] = useState("")
   const [archivedOpen, setArchivedOpen] = useState(false)
@@ -209,8 +380,10 @@ export default function PlaylistList({ playlists: initial, showActions = true }:
 
   const listProps = {
     showActions,
-    onTogglePin: (id: string, name: string, current: boolean) => toggle(id, name, { pinned: !current }),
-    onToggleArchive: (id: string, name: string, current: boolean) => toggle(id, name, { archived: !current }),
+    onTogglePin: (id: string, name: string, current: boolean) =>
+      toggle(id, name, { pinned: !current }),
+    onToggleArchive: (id: string, name: string, current: boolean) =>
+      toggle(id, name, { archived: !current }),
   }
 
   return (
@@ -221,28 +394,64 @@ export default function PlaylistList({ playlists: initial, showActions = true }:
           placeholder="search playlists"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem 0.75rem", fontSize: 16, border: `1px solid ${BORDER}`, borderRadius: 4, outline: "none", color: PURPLE, background: "white" }}
+          style={{
+            width: "100%",
+            padding: "0.5rem 0.75rem",
+            fontSize: 16,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 4,
+            outline: "none",
+            color: PURPLE,
+            background: "white",
+          }}
         />
       </div>
 
-      {isNarrow
-        ? <PlaylistListView playlists={sorted} {...listProps} />
-        : <PlaylistTable playlists={sorted} {...listProps} />}
+      {isNarrow ? (
+        <PlaylistListView playlists={sorted} {...listProps} />
+      ) : (
+        <PlaylistTable playlists={sorted} {...listProps} />
+      )}
 
       {archived.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <button
             onClick={() => setArchivedOpen((v) => !v)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#888", fontSize: 12, fontFamily: "inherit", padding: "4px 0", display: "flex", alignItems: "center", gap: 4 }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#888",
+              fontSize: 12,
+              fontFamily: "inherit",
+              padding: "4px 0",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
           >
-            {archivedOpen ? <ChevronDown style={{ width: 16, height: 16 }} /> : <ChevronRight style={{ width: 16, height: 16 }} />}
+            {archivedOpen ? (
+              <ChevronDown style={{ width: 16, height: 16 }} />
+            ) : (
+              <ChevronRight style={{ width: 16, height: 16 }} />
+            )}
             view archived ({archived.length})
           </button>
           {archivedOpen && (
             <div style={{ marginTop: 12 }}>
-              {isNarrow
-                ? <PlaylistListView playlists={archived} {...listProps} onToggleArchive={(id, name) => toggle(id, name, { archived: false })} />
-                : <PlaylistTable playlists={archived} {...listProps} onToggleArchive={(id, name) => toggle(id, name, { archived: false })} />}
+              {isNarrow ? (
+                <PlaylistListView
+                  playlists={archived}
+                  {...listProps}
+                  onToggleArchive={(id, name) => toggle(id, name, { archived: false })}
+                />
+              ) : (
+                <PlaylistTable
+                  playlists={archived}
+                  {...listProps}
+                  onToggleArchive={(id, name) => toggle(id, name, { archived: false })}
+                />
+              )}
             </div>
           )}
         </div>

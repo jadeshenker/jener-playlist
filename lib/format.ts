@@ -20,8 +20,6 @@ export function formatDurationMs(ms: number): string {
   return `${minutes}:${paddedSeconds}`
 }
 
-export function sumTrackDurationMs(
-  items: { track?: { duration_ms?: number } | null }[]
-): number {
+export function sumTrackDurationMs(items: { track?: { duration_ms?: number } | null }[]): number {
   return items.reduce((total, item) => total + (item.track?.duration_ms ?? 0), 0)
 }

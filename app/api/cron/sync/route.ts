@@ -67,9 +67,7 @@ type SyncResult =
 
 async function discoverNewPlaylists(token: string): Promise<string[]> {
   const page = await spotifyGet<SpotifyPage<SpotifyPlaylistFull>>(token, `/me/playlists?limit=10`)
-  const existing = new Set(
-    (await db.select({ id: playlists.id }).from(playlists)).map((p) => p.id)
-  )
+  const existing = new Set((await db.select({ id: playlists.id }).from(playlists)).map((p) => p.id))
   const now = Date.now()
   const added: string[] = []
 
@@ -77,7 +75,10 @@ async function discoverNewPlaylists(token: string): Promise<string[]> {
     if (existing.has(item.id)) break
     if (!item.tracks?.total) continue
 
-    const rawItems = await fetchAllPages<SpotifyPlaylistItem>(token, `/playlists/${item.id}/items?limit=100`)
+    const rawItems = await fetchAllPages<SpotifyPlaylistItem>(
+      token,
+      `/playlists/${item.id}/items?limit=100`
+    )
 
     const tracks = rawItems
       .filter((i) => i.track?.uri?.startsWith("spotify:track:"))
@@ -142,9 +143,11 @@ export async function POST(request: Request) {
 
   let targetId: string | null = null
   try {
-    const body = await request.json() as { playlistId?: string }
+    const body = (await request.json()) as { playlistId?: string }
     targetId = body.playlistId ?? null
-  } catch { /* no body — sync all */ }
+  } catch {
+    /* no body — sync all */
+  }
 
   try {
     let discovered: string[] = []
@@ -208,18 +211,35 @@ export async function POST(request: Request) {
         // Always update the stored snapshot_id, name, cover, and track count
         await db
           .update(playlists)
-          .set({ name: spotifyPlaylist.name, coverUrl, trackCount, latestSnapshotId: spotifyPlaylist.snapshot_id, updatedAt: now })
+          .set({
+            name: spotifyPlaylist.name,
+            coverUrl,
+            trackCount,
+            latestSnapshotId: spotifyPlaylist.snapshot_id,
+            updatedAt: now,
+          })
           .where(eq(playlists.id, playlist.id))
 
         // Check if content is identical to an existing version
         const existingVersion = await db
-          .select({ id: playlistVersions.id, major: playlistVersions.major, minor: playlistVersions.minor })
+          .select({
+            id: playlistVersions.id,
+            major: playlistVersions.major,
+            minor: playlistVersions.minor,
+          })
           .from(playlistVersions)
-          .where(and(eq(playlistVersions.playlistId, playlist.id), eq(playlistVersions.contentHash, hash)))
+          .where(
+            and(
+              eq(playlistVersions.playlistId, playlist.id),
+              eq(playlistVersions.contentHash, hash)
+            )
+          )
           .get()
 
         if (existingVersion) {
-          console.log(`Playlist ${playlist.id} content matches version ${existingVersion.major}.${existingVersion.minor}`)
+          console.log(
+            `Playlist ${playlist.id} content matches version ${existingVersion.major}.${existingVersion.minor}`
+          )
           await db
             .update(playlistVersions)
             .set({ name: spotifyPlaylist.name, description })
@@ -260,7 +280,9 @@ export async function POST(request: Request) {
           .returning()
 
         if (tracks.length > 0) {
-          await db.insert(playlistItems).values(tracks.map((t) => ({ versionId: newVersion.id, ...t })))
+          await db
+            .insert(playlistItems)
+            .values(tracks.map((t) => ({ versionId: newVersion.id, ...t })))
         }
 
         console.log(`Created new version for ${playlist.id}: ${newMajor}.${newMinor}`)
@@ -280,6 +302,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ discovered, results })
   } catch (err) {
     console.error("Unexpected error:", err)
-    return NextResponse.json({ error: String(err), stack: err instanceof Error ? err.stack : undefined }, { status: 500 })
+    return NextResponse.json(
+      { error: String(err), stack: err instanceof Error ? err.stack : undefined },
+      { status: 500 }
+    )
   }
 }

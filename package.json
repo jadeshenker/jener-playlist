@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write .",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:backfill": "dotenv -e .env.local -- tsx scripts/backfill.ts",
@@ -31,6 +32,8 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.21.0",
     "eslint-config-next": "15.2.4",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.4",
     "tsx": "^4.22.3",
     "typescript": "^5.8.2"
   }

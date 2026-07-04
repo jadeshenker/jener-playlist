@@ -64,7 +64,10 @@ function pathFromSpotifyNext(next: string): string {
 }
 
 /** Fetches every page of playlist tracks (Spotify max 100 per request). */
-export async function fetchAllPlaylistItems<T>(playlistId: string, limit = 100): Promise<{
+export async function fetchAllPlaylistItems<T>(
+  playlistId: string,
+  limit = 100
+): Promise<{
   items: T[]
   snapshot_id?: string
 }> {

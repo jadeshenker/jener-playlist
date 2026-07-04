@@ -55,7 +55,10 @@ async function fetchAllPages<T>(token: string, initialPath: string): Promise<T[]
   let path: string | null = initialPath
   while (path) {
     const currentPath = path
-    const data: SpotifyPaginatedPage<T> = await spotifyGet<SpotifyPaginatedPage<T>>(token, currentPath)
+    const data: SpotifyPaginatedPage<T> = await spotifyGet<SpotifyPaginatedPage<T>>(
+      token,
+      currentPath
+    )
     items.push(...(data.items ?? []))
     path = data.next ? pathFromNext(data.next) : null
   }
@@ -94,7 +97,10 @@ type SpotifyTrack = {
   }
 }
 
-async function fetchTrackCovers(token: string, trackIds: string[]): Promise<Map<string, string | null>> {
+async function fetchTrackCovers(
+  token: string,
+  trackIds: string[]
+): Promise<Map<string, string | null>> {
   const coverByTrackId = new Map<string, string | null>()
   for (let i = 0; i < trackIds.length; i += 50) {
     const batch = trackIds.slice(i, i + 50)
@@ -116,10 +122,10 @@ async function resyncCovers(token: string) {
   console.log(`Re-syncing cover images for ${allPlaylists.length} playlists...\n`)
 
   for (const playlist of allPlaylists) {
-    const data = await spotifyGet<{ images?: { url: string; height?: number | null; width?: number | null }[]; tracks?: { total: number } }>(
-      token,
-      `/playlists/${playlist.id}?fields=images,tracks(total)`
-    )
+    const data = await spotifyGet<{
+      images?: { url: string; height?: number | null; width?: number | null }[]
+      tracks?: { total: number }
+    }>(token, `/playlists/${playlist.id}?fields=images,tracks(total)`)
     const coverUrl = spotifyThumbnailUrl(data.images, 200) ?? null
     const trackCount = data.tracks?.total ?? null
 
@@ -192,17 +198,20 @@ async function main() {
       }))
 
     // Derive dateCreated from the earliest addedAt, with override support
-    const dateCreated = DATE_CREATED_OVERRIDES[full.id] ?? (() => {
-      const dates = tracks.map((t) => t.addedAt).filter(Boolean) as string[]
-      const min = dates.sort()[0]
-      return min ? min.substring(0, 10) : null
-    })()
+    const dateCreated =
+      DATE_CREATED_OVERRIDES[full.id] ??
+      (() => {
+        const dates = tracks.map((t) => t.addedAt).filter(Boolean) as string[]
+        const min = dates.sort()[0]
+        return min ? min.substring(0, 10) : null
+      })()
 
     // Fetch album covers for all tracks in this playlist
     const uniqueTrackIds = [...new Set(tracks.map((t) => t.trackId))]
-    const coverByTrackId = uniqueTrackIds.length > 0
-      ? await fetchTrackCovers(token, uniqueTrackIds)
-      : new Map<string, string | null>()
+    const coverByTrackId =
+      uniqueTrackIds.length > 0
+        ? await fetchTrackCovers(token, uniqueTrackIds)
+        : new Map<string, string | null>()
 
     const hash = contentHash(tracks.map((t) => t.trackUri))
     const description = full.description?.trim() || null
@@ -223,7 +232,14 @@ async function main() {
       })
       .onConflictDoUpdate({
         target: playlists.id,
-        set: { name: full.name, coverUrl, trackCount, dateCreated, latestSnapshotId: full.snapshot_id, updatedAt: now },
+        set: {
+          name: full.name,
+          coverUrl,
+          trackCount,
+          dateCreated,
+          latestSnapshotId: full.snapshot_id,
+          updatedAt: now,
+        },
       })
 
     const [version] = await db
@@ -251,7 +267,9 @@ async function main() {
       )
     }
 
-    console.log(`  ✓ ${full.name} — v1.0, ${tracks.length} tracks, dateCreated: ${dateCreated ?? "unknown"}`)
+    console.log(
+      `  ✓ ${full.name} — v1.0, ${tracks.length} tracks, dateCreated: ${dateCreated ?? "unknown"}`
+    )
   }
 
   console.log("\nBackfill complete!")

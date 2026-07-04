@@ -32,8 +32,7 @@ function authRedirect({ url, baseUrl }: { url: string; baseUrl: string }) {
 
     const isLoopback = u.hostname === "localhost" || u.hostname === "127.0.0.1"
     const canonicalHost = new URL(origin).hostname
-    const canonicalIsLoopback =
-      canonicalHost === "localhost" || canonicalHost === "127.0.0.1"
+    const canonicalIsLoopback = canonicalHost === "localhost" || canonicalHost === "127.0.0.1"
 
     if (isLoopback && canonicalIsLoopback) {
       return `${origin}${u.pathname}${u.search}${u.hash}`
@@ -59,7 +58,11 @@ async function refreshSpotifyToken(refreshToken: string) {
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
   })
   if (!res.ok) throw new Error("Spotify refresh token request failed")
-  const data = await res.json() as { access_token: string; refresh_token?: string; expires_in: number }
+  const data = (await res.json()) as {
+    access_token: string
+    refresh_token?: string
+    expires_in: number
+  }
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token ?? refreshToken,
