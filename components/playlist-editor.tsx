@@ -10,6 +10,64 @@ const PURPLE = "#6d28d9"
 const BORDER = "#c4b5fd"
 const HEADER_BG = "#ede9fe"
 
+const actionBtnStyle = (disabled: boolean): React.CSSProperties => ({
+  background: "none",
+  border: "none",
+  cursor: disabled ? "default" : "pointer",
+  color: disabled ? "#c4b5fd" : PURPLE,
+  textDecoration: disabled ? "none" : "underline",
+  padding: 0,
+  font: "inherit",
+  fontSize: 13,
+})
+
+function BulkActionBar({
+  selectedCount,
+  showSelectAll,
+  allFilteredSelected,
+  isSaving,
+  onToggleSelectAll,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+  onClear,
+}: {
+  selectedCount: number
+  showSelectAll: boolean
+  allFilteredSelected: boolean
+  isSaving: boolean
+  onToggleSelectAll: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onRemove: () => void
+  onClear: () => void
+}) {
+  const noSelection = selectedCount === 0
+  return (
+    <div className="mobile-pad" style={{ display: "flex", alignItems: "center", flexWrap: showSelectAll ? "wrap" : undefined, gap: 12, position: "sticky", top: 0, background: "#faf5ff", paddingTop: "0.5rem", paddingBottom: "0.5rem", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
+      <span style={{ fontSize: 13, color: "#888" }}>{selectedCount} selected</span>
+      {showSelectAll && (
+        <button onClick={onToggleSelectAll} style={{ ...actionBtnStyle(false), display: "inline-flex", alignItems: "center", gap: 4 }}>
+          [ {allFilteredSelected ? <CheckboxOn style={{ width: 16, height: 16, display: "block" }} /> : <Checkbox style={{ width: 16, height: 16, display: "block" }} />}
+           all ]
+        </button>
+      )}
+      <button onClick={onMoveUp} disabled={noSelection || isSaving} style={{ ...actionBtnStyle(noSelection || isSaving), display: "inline-flex", alignItems: "center", gap: 4 }}>
+        [ <ChevronUp style={{ width: 16, height: 16, display: "block" }} /> move up ]
+      </button>
+      <button onClick={onMoveDown} disabled={noSelection || isSaving} style={{ ...actionBtnStyle(noSelection || isSaving), display: "inline-flex", alignItems: "center", gap: 4 }}>
+        [ <ChevronDown style={{ width: 16, height: 16, display: "block" }} /> move down ]
+      </button>
+      <button onClick={onRemove} disabled={noSelection || isSaving} style={actionBtnStyle(noSelection || isSaving)}>
+        [ remove {selectedCount} ]
+      </button>
+      <button onClick={onClear} disabled={noSelection} style={actionBtnStyle(noSelection)}>
+        [ clear ]
+      </button>
+    </div>
+  )
+}
+
 export type PlaylistItem = {
   added_at?: string
   track: {
@@ -110,6 +168,104 @@ export default function PlaylistEditor({
     }
   }
 
+  async function moveSelectedUp() {
+    if (selected.size === 0) return
+    const selectedItems = simplifiedItems
+      .filter((item) => selected.has(item.uri))
+      .sort((a, b) => a.itemsIndex - b.itemsIndex)
+    if (selectedItems.length === 0) return
+
+    const occupied = new Set(selectedItems.map((item) => item.itemsIndex))
+    const moves: { from: number; to: number }[] = []
+    for (const item of selectedItems) {
+      const from = item.itemsIndex
+      const to = from - 1
+      if (to < 0 || occupied.has(to)) continue
+      moves.push({ from, to })
+      occupied.delete(from)
+      occupied.add(to)
+    }
+    if (moves.length === 0) return
+
+    setItems((prev) => {
+      const next = [...prev]
+      for (const { from, to } of moves) {
+        const [moved] = next.splice(from, 1)
+        next.splice(to, 0, moved)
+      }
+      return next
+    })
+    setError(null)
+    setIsSaving(true)
+    try {
+      let currentSnapshotId = snapshotId
+      for (const { from, to } of moves) {
+        const response = await fetch(`/api/playlists/${playlistId}/reorder`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ range_start: from, insert_before: to, range_length: 1, snapshot_id: currentSnapshotId }),
+        })
+        if (!response.ok) throw new Error("Failed to reorder")
+        const data = await response.json()
+        currentSnapshotId = data.snapshot_id
+      }
+      setSnapshotId(currentSnapshotId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function moveSelectedDown() {
+    if (selected.size === 0) return
+    const selectedItems = simplifiedItems
+      .filter((item) => selected.has(item.uri))
+      .sort((a, b) => b.itemsIndex - a.itemsIndex)
+    if (selectedItems.length === 0) return
+
+    const occupied = new Set(selectedItems.map((item) => item.itemsIndex))
+    const moves: { from: number; to: number }[] = []
+    for (const item of selectedItems) {
+      const from = item.itemsIndex
+      const to = from + 1
+      if (to >= items.length || occupied.has(to)) continue
+      moves.push({ from, to })
+      occupied.delete(from)
+      occupied.add(to)
+    }
+    if (moves.length === 0) return
+
+    setItems((prev) => {
+      const next = [...prev]
+      for (const { from, to } of moves) {
+        const [moved] = next.splice(from, 1)
+        next.splice(to, 0, moved)
+      }
+      return next
+    })
+    setError(null)
+    setIsSaving(true)
+    try {
+      let currentSnapshotId = snapshotId
+      for (const { from, to } of moves) {
+        const response = await fetch(`/api/playlists/${playlistId}/reorder`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ range_start: from, insert_before: to + 1, range_length: 1, snapshot_id: currentSnapshotId }),
+        })
+        if (!response.ok) throw new Error("Failed to reorder")
+        const data = await response.json()
+        currentSnapshotId = data.snapshot_id
+      }
+      setSnapshotId(currentSnapshotId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const artistsInPlaylist = useMemo(() => {
     const counts = new Map<string, number>()
     for (const item of items) {
@@ -204,17 +360,6 @@ export default function PlaylistEditor({
     }
   }
 
-  const actionBtnStyle = (disabled: boolean): React.CSSProperties => ({
-    background: "none",
-    border: "none",
-    cursor: disabled ? "default" : "pointer",
-    color: disabled ? "#c4b5fd" : PURPLE,
-    textDecoration: disabled ? "none" : "underline",
-    padding: 0,
-    font: "inherit",
-    fontSize: 13,
-  })
-
   const tabBtnStyle = (active: boolean): React.CSSProperties => ({
     background: active ? "blue" : HEADER_BG,
     color: active ? "white" : "blue",
@@ -228,7 +373,7 @@ export default function PlaylistEditor({
           {error}
         </div>
       ) : null}
-  
+
       <div className="mobile-pad" style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
         <button className="contained" type="button" onClick={() => setActiveTab("songs")} style={tabBtnStyle(activeTab === "songs")}>
           songs ({simplifiedItems.length})
@@ -237,11 +382,11 @@ export default function PlaylistEditor({
           artists ({artistsInPlaylist.length})
         </button>
       </div>
-  
+
       {activeTab === "artists" ? (
         <>
           {artistsInPlaylist.length > 0 ? (
-            <div style={{ marginBottom: "1rem" }}>
+            <div className="mobile-pad" style={{ marginBottom: "1rem" }}>
               <button type="button" onClick={() => void copyArtistNames()} style={actionBtnStyle(false)}>
                 {artistsCopied ? "copied!" : "[ copy all artist names ]"}
               </button>
@@ -279,7 +424,7 @@ export default function PlaylistEditor({
           </table>
         </>
       ) : null}
-  
+
       {activeTab === "songs" ? (
         <>
           <div className="mobile-pad" style={{ marginBottom: "1rem" }}>
@@ -303,25 +448,27 @@ export default function PlaylistEditor({
               }}
             />
           </div>
-  
+
           {songSearch.trim() ? (
             <p style={{ margin: "0 0 0.75rem", fontSize: 13, color: "#888" }}>
               {filteredSongs.length} of {simplifiedItems.length} songs
             </p>
           ) : null}
-  
+
           {!readOnly && (
-            <div className="mobile-pad" style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", paddingTop: "0.5rem", paddingBottom: "0.5rem", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
-              <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
-              <button onClick={() => void removeSelectedItems()} disabled={selected.size === 0 || isSaving} style={actionBtnStyle(selected.size === 0 || isSaving)}>
-                [ remove {selected.size} ]
-              </button>
-              <button onClick={() => setSelected(new Set())} disabled={selected.size === 0} style={actionBtnStyle(selected.size === 0)}>
-                [ clear ]
-              </button>
-            </div>
+            <BulkActionBar
+              selectedCount={selected.size}
+              showSelectAll={isNarrow}
+              allFilteredSelected={allFilteredSelected}
+              isSaving={isSaving}
+              onToggleSelectAll={toggleSelectAll}
+              onMoveUp={() => void moveSelectedUp()}
+              onMoveDown={() => void moveSelectedDown()}
+              onRemove={() => void removeSelectedItems()}
+              onClear={() => setSelected(new Set())}
+            />
           )}
-  
+
           {isNarrow ? (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
               {filteredSongs.length === 0 ? (
@@ -329,7 +476,7 @@ export default function PlaylistEditor({
                   {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
                 </li>
               ) : null}
-  
+
               {filteredSongs.map((item) => (
                 <li
                   key={`${item.id}-${item.itemsIndex}`}
@@ -350,13 +497,13 @@ export default function PlaylistEditor({
                       {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
                     </button>
                   )}
-  
+
                   {item.albumCoverUrl ? (
                     <Image src={item.albumCoverUrl} alt="" width={40} height={40} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }} />
                   ) : (
                     <div style={{ width: 40, height: 40, borderRadius: 4, background: HEADER_BG }} />
                   )}
-  
+
                   <div style={{ minWidth: 0, overflow: "hidden" }}>
                     <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.name}
@@ -365,7 +512,7 @@ export default function PlaylistEditor({
                       {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
                     </div>
                   </div>
-  
+
                   {!readOnly && (
                     <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move up"><ChevronUp style={{ width: 28, height: 28, display: "block" }} /></button>
