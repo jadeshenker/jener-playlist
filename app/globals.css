@@ -23,6 +23,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 a {
@@ -53,7 +54,12 @@ main {
 
 @media (max-width: 650px) {
   main {
-    padding: 1rem 0.75rem 2rem;
+    padding: 1rem 0 2rem;
+  }
+
+  .mobile-pad {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 

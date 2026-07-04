@@ -50,7 +50,7 @@ export default async function PlaylistsPage() {
 
   return (
     <main>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+      <div className="mobile-pad" style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 28 }}>
         <h1 style={{ fontSize: 18, margin: 0, color: "blue" }}> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
         <div style={{ display: "flex", gap: 8 }}>
           {session && <SyncButton />}

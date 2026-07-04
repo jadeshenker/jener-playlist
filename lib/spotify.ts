@@ -11,7 +11,7 @@ async function getAccessToken() {
   }
 
   if (session.error === "RefreshTokenError") {
-    redirect("/login")
+    redirect("/api/auth/signin")
   }
 
   return session.accessToken

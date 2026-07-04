@@ -31,7 +31,7 @@ export default function SyncButton({ playlistId }: { playlistId?: string }) {
   return (
     <>
       <button onClick={handleSync} disabled={state === "syncing"} className="contained">
-        {state === "syncing" ? "syncing…" : isSingle ? "sync playlist" : "sync all"}
+        {state === "syncing" ? "syncing…" : isSingle ? "sync" : "sync all"}
       </button>
       {state !== "idle" && (
         <div

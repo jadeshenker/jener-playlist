@@ -154,36 +154,36 @@ export async function POST(request: Request) {
       const row = await db.select().from(playlists).where(eq(playlists.id, targetId)).get()
       tracked = row ? [row] : []
     } else {
-      console.log("[CRON] Discovering new playlists...")
+      console.log("Discovering new playlists...")
       discovered = await discoverNewPlaylists(token)
-      console.log("[CRON] Discovered playlists:", discovered)
+      console.log("Discovered playlists:", discovered)
       tracked = await db.select().from(playlists).where(eq(playlists.archived, 0))
     }
 
-    console.log(`[CRON] Syncing ${tracked.length} playlists`)
+    console.log(`Syncing ${tracked.length} playlists`)
 
     const results: SyncResult[] = []
 
     for (const playlist of tracked) {
       try {
-        console.log(`[CRON] Syncing playlist: ${playlist.id} (${playlist.name})`)
+        console.log(`Syncing playlist: ${playlist.id} (${playlist.name})`)
         const spotifyPlaylist = await spotifyGet<SpotifyPlaylistFull>(
           token,
           `/playlists/${playlist.id}?fields=id,name,description,snapshot_id,images,tracks(total)`
         )
 
         if (spotifyPlaylist.snapshot_id === playlist.latestSnapshotId) {
-          console.log(`[CRON] Playlist ${playlist.id} unchanged`)
+          console.log(`Playlist ${playlist.id} unchanged`)
           results.push({ id: playlist.id, name: playlist.name, status: "unchanged" })
           continue
         }
 
-        console.log(`[CRON] Playlist ${playlist.id} changed, fetching tracks...`)
+        console.log(`Playlist ${playlist.id} changed, fetching tracks...`)
         const rawItems = await fetchAllPages<SpotifyPlaylistItem>(
           token,
           `/playlists/${playlist.id}/items?limit=100`
         )
-        console.log(`[CRON] Fetched ${rawItems.length} items for ${playlist.id}`)
+        console.log(`Fetched ${rawItems.length} items for ${playlist.id}`)
 
         const tracks = rawItems
           .filter((item) => item.track?.uri?.startsWith("spotify:track:"))
@@ -219,7 +219,11 @@ export async function POST(request: Request) {
           .get()
 
         if (existingVersion) {
-          console.log(`[CRON] Playlist ${playlist.id} content matches version ${existingVersion.major}.${existingVersion.minor}`)
+          console.log(`Playlist ${playlist.id} content matches version ${existingVersion.major}.${existingVersion.minor}`)
+          await db
+            .update(playlistVersions)
+            .set({ name: spotifyPlaylist.name, description })
+            .where(eq(playlistVersions.id, existingVersion.id))
           results.push({
             id: playlist.id,
             name: spotifyPlaylist.name,
@@ -259,7 +263,7 @@ export async function POST(request: Request) {
           await db.insert(playlistItems).values(tracks.map((t) => ({ versionId: newVersion.id, ...t })))
         }
 
-        console.log(`[CRON] Created new version for ${playlist.id}: ${newMajor}.${newMinor}`)
+        console.log(`Created new version for ${playlist.id}: ${newMajor}.${newMinor}`)
         results.push({
           id: playlist.id,
           name: spotifyPlaylist.name,
@@ -267,15 +271,15 @@ export async function POST(request: Request) {
           version: `${newMajor}.${newMinor}`,
         })
       } catch (err) {
-        console.error(`[CRON] Error syncing playlist ${playlist.id}:`, err)
+        console.error(`Error syncing playlist ${playlist.id}:`, err)
         results.push({ id: playlist.id, name: playlist.name, status: "error", error: String(err) })
       }
     }
 
-    console.log("[CRON] Sync complete:", results)
+    console.log("Sync complete:", results)
     return NextResponse.json({ discovered, results })
   } catch (err) {
-    console.error("[CRON] Unexpected error:", err)
+    console.error("Unexpected error:", err)
     return NextResponse.json({ error: String(err), stack: err instanceof Error ? err.stack : undefined }, { status: 500 })
   }
 }

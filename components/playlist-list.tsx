@@ -126,19 +126,43 @@ function PlaylistListView({
 }) {
   return (
     <>
-    <ul style={{ listStyle: "none", padding: 0, margin: 0, border: `1px solid ${BORDER}`, borderRadius: 4, overflow: "hidden" }}>
+    <ul style={{ listStyle: "none", padding: 0, margin: 0, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
       {playlists.length ? playlists.map((playlist) => (
-        <li key={playlist.id} style={{ background: "white", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
-          <Link href={`/playlists/${playlist.id}`} style={{ display: "flex", alignItems: "center", gap: 10, color: PURPLE, textDecoration: "none", flex: 1, minWidth: 0 }}>
+        <li
+        key={playlist.id}
+        style={{
+          background: "white",
+          borderBottom: `1px solid ${BORDER}`,
+          display: "grid",
+          gridTemplateColumns: showActions ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 12px",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+          <Link
+  href={`/playlists/${playlist.id}`}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    color: PURPLE,
+    textDecoration: "none",
+    minWidth: 0,
+    overflow: "hidden",
+  }}
+>
             {playlist.coverUrl ? (
               <Image src={playlist.coverUrl} alt="" width={44} height={44} style={{ width: 44, height: 44, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
             ) : null}
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
               <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: "underline" }}>
                 {playlist.pinned ? <span style={{ marginRight: 4, fontSize: 12 }}>📌</span> : null}
                 {playlist.name}
               </div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: "#888", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {playlist.trackCount ?? 0} tracks{playlist.dateCreated ? ` · ${formatAddedAt(playlist.dateCreated)}` : ""}
               </div>
             </div>
@@ -191,13 +215,13 @@ export default function PlaylistList({ playlists: initial, showActions = true }:
 
   return (
     <div>
-      <div style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
+      <div className="mobile-pad" style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
         <input
           type="search"
           placeholder="search playlists"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem 0.75rem", fontSize: 14, border: `1px solid ${BORDER}`, borderRadius: 4, outline: "none", color: PURPLE, background: "white" }}
+          style={{ width: "100%", padding: "0.5rem 0.75rem", fontSize: 16, border: `1px solid ${BORDER}`, borderRadius: 4, outline: "none", color: PURPLE, background: "white" }}
         />
       </div>
 

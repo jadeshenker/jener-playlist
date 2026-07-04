@@ -223,14 +223,13 @@ export default function PlaylistEditor({
 
   return (
     <div style={{ marginTop: "0.5rem" }}>
-
       {error ? (
         <div style={{ marginBottom: "1rem", background: HEADER_BG, border: `1px solid ${BORDER}`, padding: "0.75rem", borderRadius: 4, fontSize: 13 }}>
           {error}
         </div>
       ) : null}
-
-      <div style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
+  
+      <div className="mobile-pad" style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
         <button className="contained" type="button" onClick={() => setActiveTab("songs")} style={tabBtnStyle(activeTab === "songs")}>
           songs ({simplifiedItems.length})
         </button>
@@ -238,7 +237,7 @@ export default function PlaylistEditor({
           artists ({artistsInPlaylist.length})
         </button>
       </div>
-
+  
       {activeTab === "artists" ? (
         <>
           {artistsInPlaylist.length > 0 ? (
@@ -269,7 +268,9 @@ export default function PlaylistEditor({
               ) : (
                 artistsInPlaylist.map((artist) => (
                   <tr key={artist.name} style={{ background: "white" }}>
-                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>{artist.name}</td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {artist.name}
+                    </td>
                     <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>{artist.trackCount}</td>
                   </tr>
                 ))
@@ -278,14 +279,17 @@ export default function PlaylistEditor({
           </table>
         </>
       ) : null}
-
+  
       {activeTab === "songs" ? (
         <>
-          <div style={{ marginBottom: "1rem" }}>
+          <div className="mobile-pad" style={{ marginBottom: "1rem" }}>
             <input
               type="search"
               value={songSearch}
-              onChange={(e) => { setSongSearch(e.target.value); setSelected(new Set()) }}
+              onChange={(e) => {
+                setSongSearch(e.target.value)
+                setSelected(new Set())
+              }}
               placeholder="track or artist name"
               style={{
                 width: "100%",
@@ -299,14 +303,15 @@ export default function PlaylistEditor({
               }}
             />
           </div>
+  
           {songSearch.trim() ? (
             <p style={{ margin: "0 0 0.75rem", fontSize: 13, color: "#888" }}>
               {filteredSongs.length} of {simplifiedItems.length} songs
             </p>
           ) : null}
-
+  
           {!readOnly && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", padding: "0.5rem 0", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
+            <div className="mobile-pad" style={{ display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 0, background: "#faf5ff", paddingTop: "0.5rem", paddingBottom: "0.5rem", zIndex: 10, borderBottom: `1px solid ${BORDER}` }}>
               <span style={{ fontSize: 13, color: "#888" }}>{selected.size} selected</span>
               <button onClick={() => void removeSelectedItems()} disabled={selected.size === 0 || isSaving} style={actionBtnStyle(selected.size === 0 || isSaving)}>
                 [ remove {selected.size} ]
@@ -316,7 +321,7 @@ export default function PlaylistEditor({
               </button>
             </div>
           )}
-
+  
           {isNarrow ? (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 1, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, overflow: "hidden" }}>
               {filteredSongs.length === 0 ? (
@@ -324,26 +329,45 @@ export default function PlaylistEditor({
                   {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
                 </li>
               ) : null}
+  
               {filteredSongs.map((item) => (
-                <li key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
+                <li
+                  key={`${item.id}-${item.itemsIndex}`}
+                  style={{
+                    background: selected.has(item.uri) ? HEADER_BG : "white",
+                    borderBottom: `1px solid ${BORDER}`,
+                    display: "grid",
+                    gridTemplateColumns: readOnly ? "auto minmax(0, 1fr)" : "auto auto minmax(0, 1fr) auto",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
                   {!readOnly && (
-                    <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, flexShrink: 0, lineHeight: 0 }}>
+                    <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, lineHeight: 0 }}>
                       {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
                     </button>
                   )}
+  
                   {item.albumCoverUrl ? (
-                    <Image src={item.albumCoverUrl} alt="" width={40} height={40} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+                    <Image src={item.albumCoverUrl} alt="" width={40} height={40} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }} />
                   ) : (
-                    <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
+                    <div style={{ width: 40, height: 40, borderRadius: 4, background: HEADER_BG }} />
                   )}
-                  <div style={{ flex: 1, minWidth: 0, width: isXSmall ? 150 : undefined }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                    <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+  
+                  <div style={{ minWidth: 0, overflow: "hidden" }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {item.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#888", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.artists}{item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
                     </div>
                   </div>
+  
                   {!readOnly && (
-                    <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <span style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move up"><ChevronUp style={{ width: 28, height: 28, display: "block" }} /></button>
                       <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ background: "none", border: "none", cursor: item.itemsIndex === items.length - 1 || isSaving ? "default" : "pointer", padding: 0, color: item.itemsIndex === items.length - 1 || isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="move down"><ChevronDown style={{ width: 28, height: 28, display: "block" }} /></button>
                       {!isXSmall && <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ background: "none", border: "none", cursor: isSaving ? "default" : "pointer", padding: 0, color: isSaving ? "#c4b5fd" : PURPLE, lineHeight: 0 }} title="remove"><Delete style={{ width: 26, height: 26, display: "block" }} /></button>}
@@ -353,85 +377,85 @@ export default function PlaylistEditor({
               ))}
             </ul>
           ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
-            <colgroup>
-              {!readOnly && <col style={{ width: 44 }} />}
-              <col style={{ width: 44 }} />
-              <col />
-              <col style={{ width: 210 }} />
-              <col style={{ width: 140 }} />
-              <col style={{ width: 105 }} />
-              {!readOnly && <col style={{ width: 130 }} />}
-            </colgroup>
-            <thead>
-              <tr style={{ background: HEADER_BG }}>
-                {!readOnly && (
-                  <th style={{ textAlign: "center", padding: "8px 12px", borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-                    <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
-                      {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
-                    </button>
-                  </th>
-                )}
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
-                <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
-                <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
-                {!readOnly && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSongs.length === 0 ? (
-                <tr>
-                  <td colSpan={readOnly ? 5 : 7} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
-                    {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
-                  </td>
-                </tr>
-              ) : null}
-              {filteredSongs.map((item) => (
-                <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}>
+              <colgroup>
+                {!readOnly && <col style={{ width: 44 }} />}
+                <col style={{ width: 44 }} />
+                <col />
+                <col style={{ width: 210 }} />
+                <col style={{ width: 140 }} />
+                <col style={{ width: 105 }} />
+                {!readOnly && <col style={{ width: 130 }} />}
+              </colgroup>
+              <thead>
+                <tr style={{ background: HEADER_BG }}>
                   {!readOnly && (
-                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
-                      <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
-                        {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                    <th style={{ textAlign: "center", padding: "8px 12px", borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+                      <button onClick={toggleSelectAll} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                        {allFilteredSelected ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
                       </button>
-                    </td>
+                    </th>
                   )}
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888" }}>
-                    {item.itemsIndex + 1}
-                  </td>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                      {item.albumCoverUrl ? (
-                        <Image src={item.albumCoverUrl} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 36, height: 36, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
-                      )}
-                      <span>{item.name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>
-                    {item.artists}
-                  </td>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", whiteSpace: "nowrap" }}>
-                    {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
-                  </td>
-                  <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
-                    {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
-                  </td>
-                  {!readOnly && (
-                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
-                      <span style={{ display: "inline-flex", gap: 10 }}>
-                        <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
-                        <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
-                        <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
-                      </span>
-                    </td>
-                  )}
+                  <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>#</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>track</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>artist</th>
+                  <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>added <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} /></th>
+                  <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderTop: readOnly ? `1px solid ${BORDER}` : undefined, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE, whiteSpace: "nowrap" }}>duration</th>
+                  {!readOnly && <th style={{ textAlign: "center", padding: "8px 12px", fontWeight: 500, borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, color: PURPLE }}>actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredSongs.length === 0 ? (
+                  <tr>
+                    <td colSpan={readOnly ? 5 : 7} style={{ padding: "12px", border: `1px solid ${BORDER}`, color: "#888", fontSize: 13 }}>
+                      {simplifiedItems.length === 0 ? "no songs in this playlist yet" : "no songs match your search"}
+                    </td>
+                  </tr>
+                ) : null}
+                {filteredSongs.map((item) => (
+                  <tr key={`${item.id}-${item.itemsIndex}`} style={{ background: selected.has(item.uri) ? HEADER_BG : "white" }}>
+                    {!readOnly && (
+                      <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}>
+                        <button onClick={() => toggleSelect(item.uri)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: PURPLE, width: "100%", textAlign: "center", lineHeight: 0 }}>
+                          {selected.has(item.uri) ? <CheckboxOn style={{ width: 18, height: 18 }} /> : <Checkbox style={{ width: 18, height: 18 }} />}
+                        </button>
+                      </td>
+                    )}
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888" }}>
+                      {item.itemsIndex + 1}
+                    </td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                        {item.albumCoverUrl ? (
+                          <Image src={item.albumCoverUrl} alt="" width={36} height={36} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 36, height: 36, borderRadius: 4, flexShrink: 0, background: HEADER_BG }} />
+                        )}
+                        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {item.artists}
+                    </td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", whiteSpace: "nowrap" }}>
+                      {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
+                    </td>
+                    <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", color: "#888", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                      {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
+                    </td>
+                    {!readOnly && (
+                      <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center", whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-flex", gap: 10 }}>
+                          <button disabled={item.itemsIndex === 0 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from - 1); await saveMove(from, from - 1) }} style={{ ...actionBtnStyle(item.itemsIndex === 0 || isSaving), fontSize: 16 }} title="move up"><ChevronUp /></button>
+                          <button disabled={item.itemsIndex === items.length - 1 || isSaving} onClick={async () => { const from = item.itemsIndex; moveItemLocally(from, from + 1); await saveMove(from, from + 1) }} style={{ ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving), fontSize: 16 }} title="move down"><ChevronDown /></button>
+                          <button disabled={isSaving} onClick={async () => { await removeItem(item.itemsIndex, item.uri) }} style={{ ...actionBtnStyle(isSaving), fontSize: 15 }} title="remove"><Delete /></button>
+                        </span>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </>
       ) : null}
