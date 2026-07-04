@@ -126,7 +126,7 @@ function PlaylistListView({
 }) {
   return (
     <>
-    <ul style={{ listStyle: "none", padding: 0, margin: 0, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+    <ul style={{ listStyle: "none", padding: 0, margin: 0, borderTop: `1px solid ${BORDER}`, overflow: "hidden" }}>
       {playlists.length ? playlists.map((playlist) => (
         <li
         key={playlist.id}
