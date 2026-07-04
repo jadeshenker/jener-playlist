@@ -413,7 +413,7 @@ export default function PlaylistList({
         <PlaylistTable playlists={sorted} {...listProps} />
       )}
 
-      {archived.length > 0 && (
+      {showActions && archived.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <button
             onClick={() => setArchivedOpen((v) => !v)}

@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={dmMono.variable}>
       <body>
-        <div style={{ flex: 1 }}>{children}</div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>{children}</div>
         <Footer />
       </body>
     </html>
