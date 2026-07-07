@@ -33,24 +33,11 @@ export default function SyncButton({ playlistId }: { playlistId?: string }) {
 
   return (
     <>
-      <button onClick={handleSync} disabled={state === "syncing"} className="contained">
+      <button onClick={handleSync} disabled={state === "syncing"} className="btn-outline">
         {state === "syncing" ? "syncing…" : isSingle ? "sync" : "sync all"}
       </button>
       {state !== "idle" && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 16,
-            right: 16,
-            padding: "0.5rem 0.75rem",
-            border: "1px solid blue",
-            background: "white",
-            color: "blue",
-            fontSize: 13,
-            lineHeight: 1.5,
-            zIndex: 50,
-          }}
-        >
+        <div className="fixed right-4 bottom-4 z-50 border border-[blue] bg-white px-3 py-2 text-[13px] leading-normal text-[blue]">
           {state === "syncing" &&
             (isSingle
               ? "syncing playlist — please don't close the page"

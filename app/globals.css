@@ -1,76 +1,11 @@
-:root {
-  color-scheme: light;
+@import "tailwindcss";
+
+@theme inline {
+  --font-mono: var(--font-dm-mono), monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-h1 {
-  font-weight: 400;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-dm-mono), monospace;
-  background: #faf5ff;
-  color: #6d28d9;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-a {
-  color: blue;
-  text-decoration: underline;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-.contained {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #c4b5fd;
-  background: #ede9fe;
-  color: blue;
-  cursor: pointer;
-  font-size: 13px;
-  text-decoration: underline;
-}
-
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
-}
-
-@media (max-width: 650px) {
-  main {
-    padding: 1rem 0 2rem;
+@layer components {
+  .btn-outline {
+    @apply cursor-pointer border border-violet-300 bg-violet-100 px-2 py-1 text-[13px] text-[blue] underline;
   }
-
-  .mobile-pad {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-}
-
-p {
-  margin: 0;
-}
-
-footer {
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #888;
-  padding: 0.75rem 0;
 }

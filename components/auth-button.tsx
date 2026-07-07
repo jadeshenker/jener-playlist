@@ -8,7 +8,7 @@ export async function SignInButton({ label = "continue with spotify" }: { label?
         await signIn("spotify", { redirectTo: "/playlists" })
       }}
     >
-      <button className="contained">{label}</button>
+      <button className="btn-outline">{label}</button>
     </form>
   )
 }
@@ -21,7 +21,7 @@ export async function SignOutButton() {
         await signOut({ redirectTo: "/" })
       }}
     >
-      <button className="contained">sign out</button>
+      <button className="btn-outline">sign out</button>
     </form>
   )
 }

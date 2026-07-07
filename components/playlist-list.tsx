@@ -6,10 +6,6 @@ import { useEffect, useState } from "react"
 import { formatAddedAt } from "@/lib/format"
 import { ChevronDown, ChevronDown2, ChevronRight } from "pixelarticons/react"
 
-const PURPLE = "#6d28d9"
-const BORDER = "#c4b5fd"
-const HEADER_BG = "#ede9fe"
-
 export type PlaylistWithMeta = {
   id: string
   name: string
@@ -32,28 +28,12 @@ async function patchMeta(
   })
 }
 
-const actionBtnStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  color: PURPLE,
-  textDecoration: "underline",
-  padding: 0,
-  font: "inherit",
-  fontSize: 13,
-}
+const actionBtnClass = "cursor-pointer p-0 text-[13px] text-violet-700 underline"
 
 function EmptyPlaylists({ border }: { border?: boolean }) {
   return (
     <div
-      style={{
-        padding: "12px",
-        border: border ? `1px solid ${BORDER}` : "none",
-        fontSize: "14px",
-        textAlign: "center",
-        borderTop: "none",
-        background: "white",
-      }}
+      className={`bg-white p-3 text-center text-sm ${border ? "border border-t-0 border-violet-300" : ""}`}
     >
       no playlists. make one?
     </div>
@@ -71,80 +51,34 @@ function PlaylistTable({
   onTogglePin: (id: string, name: string, current: boolean) => void
   onToggleArchive: (id: string, name: string, current: boolean) => void
 }) {
+  const thClass = "border border-violet-300 px-3 py-2 font-medium text-violet-700"
+  const tdClass = "border border-violet-300 px-3 py-2"
   return (
     <>
-      <table
-        style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, tableLayout: "fixed" }}
-      >
+      <table className="w-full table-fixed border-collapse text-sm">
         <colgroup>
           <col />
-          <col style={{ width: 80 }} />
-          <col style={{ width: 130 }} />
-          {showActions && <col style={{ width: 200 }} />}
+          <col className="w-20" />
+          <col className="w-[130px]" />
+          {showActions && <col className="w-[200px]" />}
         </colgroup>
         <thead>
-          <tr style={{ background: HEADER_BG }}>
-            <th
-              style={{
-                textAlign: "left",
-                padding: "8px 12px",
-                fontWeight: 500,
-                border: `1px solid ${BORDER}`,
-                color: PURPLE,
-              }}
-            >
-              playlist
+          <tr className="bg-violet-100">
+            <th className={`${thClass} text-left`}>playlist</th>
+            <th className={`${thClass} text-center`}>tracks</th>
+            <th className={`${thClass} text-center`}>
+              created <ChevronDown2 className="inline h-[18px] w-[18px] align-middle" />
             </th>
-            <th
-              style={{
-                textAlign: "center",
-                padding: "8px 12px",
-                fontWeight: 500,
-                border: `1px solid ${BORDER}`,
-                color: PURPLE,
-              }}
-            >
-              tracks
-            </th>
-            <th
-              style={{
-                textAlign: "center",
-                padding: "8px 12px",
-                fontWeight: 500,
-                border: `1px solid ${BORDER}`,
-                color: PURPLE,
-              }}
-            >
-              created <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} />
-            </th>
-            {showActions && (
-              <th
-                style={{
-                  textAlign: "center",
-                  padding: "8px 12px",
-                  fontWeight: 500,
-                  border: `1px solid ${BORDER}`,
-                  color: PURPLE,
-                }}
-              >
-                actions
-              </th>
-            )}
+            {showActions && <th className={`${thClass} text-center`}>actions</th>}
           </tr>
         </thead>
         <tbody>
           {playlists.map((playlist) => (
-            <tr key={playlist.id} style={{ background: "white" }}>
-              <td style={{ padding: "8px 12px", border: `1px solid ${BORDER}` }}>
+            <tr key={playlist.id} className="bg-white">
+              <td className={tdClass}>
                 <Link
                   href={`/playlists/${playlist.id}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    color: PURPLE,
-                    textDecoration: "underline",
-                  }}
+                  className="flex items-center gap-2.5 text-violet-700 underline"
                 >
                   {playlist.coverUrl ? (
                     <Image
@@ -152,58 +86,31 @@ function PlaylistTable({
                       alt=""
                       width={36}
                       height={36}
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 4,
-                        objectFit: "cover",
-                        flexShrink: 0,
-                      }}
+                      className="size-9 shrink-0 rounded object-cover"
                     />
                   ) : null}
                   <span>
-                    {playlist.pinned ? (
-                      <span style={{ marginRight: 4, fontSize: 12 }}>📌</span>
-                    ) : null}
+                    {playlist.pinned ? <span className="mr-1 text-xs">📌</span> : null}
                     {playlist.name}
                   </span>
                 </Link>
               </td>
-              <td
-                style={{ padding: "8px 12px", border: `1px solid ${BORDER}`, textAlign: "center" }}
-              >
-                {playlist.trackCount ?? 0}
-              </td>
-              <td
-                style={{
-                  padding: "8px 12px",
-                  border: `1px solid ${BORDER}`,
-                  textAlign: "center",
-                  color: "#888",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <td className={`${tdClass} text-center`}>{playlist.trackCount ?? 0}</td>
+              <td className={`${tdClass} text-center whitespace-nowrap text-[#888]`}>
                 {playlist.dateCreated ? formatAddedAt(playlist.dateCreated) : "—"}
               </td>
               {showActions && (
-                <td
-                  style={{
-                    padding: "8px 12px",
-                    border: `1px solid ${BORDER}`,
-                    textAlign: "center",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <span style={{ display: "inline-flex", gap: 8 }}>
+                <td className={`${tdClass} text-center whitespace-nowrap`}>
+                  <span className="inline-flex gap-2">
                     <button
                       onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)}
-                      style={actionBtnStyle}
+                      className={actionBtnClass}
                     >
                       {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
                     </button>
                     <button
                       onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)}
-                      style={actionBtnStyle}
+                      className={actionBtnClass}
                     >
                       {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
                     </button>
@@ -232,42 +139,18 @@ function PlaylistListView({
 }) {
   return (
     <>
-      <ul
-        style={{
-          listStyle: "none",
-          padding: 0,
-          margin: 0,
-          borderTop: `1px solid ${BORDER}`,
-          overflow: "hidden",
-        }}
-      >
+      <ul className="m-0 list-none overflow-hidden border-t border-violet-300 p-0">
         {playlists.length ? (
           playlists.map((playlist) => (
             <li
               key={playlist.id}
-              style={{
-                background: "white",
-                borderBottom: `1px solid ${BORDER}`,
-                display: "grid",
-                gridTemplateColumns: showActions ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
+              className={`box-border grid w-full items-center gap-2.5 border-b border-violet-300 bg-white px-3 py-2.5 ${
+                showActions ? "grid-cols-[minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)]"
+              }`}
             >
               <Link
                 href={`/playlists/${playlist.id}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  color: PURPLE,
-                  textDecoration: "none",
-                  minWidth: 0,
-                  overflow: "hidden",
-                }}
+                className="flex min-w-0 items-center gap-2.5 overflow-hidden text-violet-700 no-underline"
               >
                 {playlist.coverUrl ? (
                   <Image
@@ -275,65 +158,31 @@ function PlaylistListView({
                     alt=""
                     width={44}
                     height={44}
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 4,
-                      objectFit: "cover",
-                      flexShrink: 0,
-                    }}
+                    className="size-11 shrink-0 rounded object-cover"
                   />
                 ) : null}
-                <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      textDecoration: "underline",
-                    }}
-                  >
-                    {playlist.pinned ? (
-                      <span style={{ marginRight: 4, fontSize: 12 }}>📌</span>
-                    ) : null}
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap underline">
+                    {playlist.pinned ? <span className="mr-1 text-xs">📌</span> : null}
                     {playlist.name}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "#888",
-                      marginTop: 2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                  <div className="mt-0.5 overflow-hidden text-xs text-ellipsis whitespace-nowrap text-[#888]">
                     {playlist.trackCount ?? 0} tracks
                     {playlist.dateCreated ? ` · ${formatAddedAt(playlist.dateCreated)}` : ""}
                   </div>
                 </div>
               </Link>
               {showActions && (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    flexShrink: 0,
-                    alignItems: "flex-end",
-                  }}
-                >
+                <span className="inline-flex shrink-0 flex-col items-end gap-1">
                   <button
                     onClick={() => onTogglePin(playlist.id, playlist.name, playlist.pinned)}
-                    style={{ ...actionBtnStyle, fontSize: 12 }}
+                    className={`${actionBtnClass} text-xs`}
                   >
                     {playlist.pinned ? "[ unpin ]" : "[ pin ]"}
                   </button>
                   <button
                     onClick={() => onToggleArchive(playlist.id, playlist.name, playlist.archived)}
-                    style={{ ...actionBtnStyle, fontSize: 12 }}
+                    className={`${actionBtnClass} text-xs`}
                   >
                     {playlist.archived ? "[ unarchive ]" : "[ archive ]"}
                   </button>
@@ -388,22 +237,13 @@ export default function PlaylistList({
 
   return (
     <div>
-      <div className="mobile-pad" style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
+      <div className="mt-6 mb-4 max-[650px]:px-3">
         <input
           type="search"
           placeholder="search playlists"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "0.5rem 0.75rem",
-            fontSize: 16,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 4,
-            outline: "none",
-            color: PURPLE,
-            background: "white",
-          }}
+          className="w-full rounded border border-violet-300 bg-white px-3 py-2 text-base text-violet-700 outline-none"
         />
       </div>
 
@@ -414,31 +254,20 @@ export default function PlaylistList({
       )}
 
       {showActions && archived.length > 0 && (
-        <div style={{ marginTop: 24 }}>
+        <div className="mt-6">
           <button
             onClick={() => setArchivedOpen((v) => !v)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#888",
-              fontSize: 12,
-              fontFamily: "inherit",
-              padding: "4px 0",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
+            className="flex cursor-pointer items-center gap-1 border-0 bg-transparent py-1 text-xs text-[#888]"
           >
             {archivedOpen ? (
-              <ChevronDown style={{ width: 16, height: 16 }} />
+              <ChevronDown className="h-4 w-4" />
             ) : (
-              <ChevronRight style={{ width: 16, height: 16 }} />
+              <ChevronRight className="h-4 w-4" />
             )}
             view archived ({archived.length})
           </button>
           {archivedOpen && (
-            <div style={{ marginTop: 12 }}>
+            <div className="mt-3">
               {isNarrow ? (
                 <PlaylistListView
                   playlists={archived}

@@ -13,20 +13,12 @@ import {
   Delete,
 } from "pixelarticons/react"
 
-const PURPLE = "#6d28d9"
-const BORDER = "#c4b5fd"
-const HEADER_BG = "#ede9fe"
-
-const actionBtnStyle = (disabled: boolean): React.CSSProperties => ({
-  background: "none",
-  border: "none",
-  cursor: disabled ? "default" : "pointer",
-  color: disabled ? "#c4b5fd" : PURPLE,
-  textDecoration: disabled ? "none" : "underline",
-  padding: 0,
-  font: "inherit",
-  fontSize: 13,
-})
+const actionBtnClass = (disabled: boolean) =>
+  `p-0 text-[13px] ${
+    disabled
+      ? "cursor-default text-violet-300 no-underline"
+      : "cursor-pointer text-violet-700 underline"
+  }`
 
 function BulkActionBar({
   selectedCount,
@@ -52,32 +44,21 @@ function BulkActionBar({
   const noSelection = selectedCount === 0
   return (
     <div
-      className="mobile-pad"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        flexWrap: showSelectAll ? "wrap" : undefined,
-        gap: 12,
-        position: "sticky",
-        top: 0,
-        background: "#faf5ff",
-        paddingTop: "0.5rem",
-        paddingBottom: "0.5rem",
-        zIndex: 10,
-        borderBottom: `1px solid ${BORDER}`,
-      }}
+      className={`sticky top-0 z-10 flex items-center gap-3 border-b border-violet-300 bg-purple-50 py-2 max-[650px]:px-3 ${
+        showSelectAll ? "flex-wrap" : ""
+      }`}
     >
-      <span style={{ fontSize: 13, color: "#888" }}>{selectedCount} selected</span>
+      <span className="text-[13px] text-[#888]">{selectedCount} selected</span>
       {showSelectAll && (
         <button
           onClick={onToggleSelectAll}
-          style={{ ...actionBtnStyle(false), display: "inline-flex", alignItems: "center", gap: 4 }}
+          className={`${actionBtnClass(false)} inline-flex items-center gap-1`}
         >
           [{" "}
           {allFilteredSelected ? (
-            <CheckboxOn style={{ width: 16, height: 16, display: "block" }} />
+            <CheckboxOn className="block h-4 w-4" />
           ) : (
-            <Checkbox style={{ width: 16, height: 16, display: "block" }} />
+            <Checkbox className="block h-4 w-4" />
           )}
           all ]
         </button>
@@ -85,35 +66,25 @@ function BulkActionBar({
       <button
         onClick={onMoveUp}
         disabled={noSelection || isSaving}
-        style={{
-          ...actionBtnStyle(noSelection || isSaving),
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-        }}
+        className={`${actionBtnClass(noSelection || isSaving)} inline-flex items-center gap-1`}
       >
-        [ <ChevronUp style={{ width: 16, height: 16, display: "block" }} /> move up ]
+        [ <ChevronUp className="block h-4 w-4" /> move up ]
       </button>
       <button
         onClick={onMoveDown}
         disabled={noSelection || isSaving}
-        style={{
-          ...actionBtnStyle(noSelection || isSaving),
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-        }}
+        className={`${actionBtnClass(noSelection || isSaving)} inline-flex items-center gap-1`}
       >
-        [ <ChevronDown style={{ width: 16, height: 16, display: "block" }} /> move down ]
+        [ <ChevronDown className="block h-4 w-4" /> move down ]
       </button>
       <button
         onClick={onRemove}
         disabled={noSelection || isSaving}
-        style={actionBtnStyle(noSelection || isSaving)}
+        className={actionBtnClass(noSelection || isSaving)}
       >
         [ remove {selectedCount} ]
       </button>
-      <button onClick={onClear} disabled={noSelection} style={actionBtnStyle(noSelection)}>
+      <button onClick={onClear} disabled={noSelection} className={actionBtnClass(noSelection)}>
         [ clear ]
       </button>
     </div>
@@ -429,43 +400,38 @@ export default function PlaylistEditor({
     }
   }
 
-  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
-    background: active ? "blue" : HEADER_BG,
-    color: active ? "white" : "blue",
-    borderColor: active ? PURPLE : BORDER,
-  })
+  const tabBtnClass = (active: boolean) =>
+    `btn-outline ${
+      active
+        ? "border-violet-700 bg-[blue] text-white"
+        : "border-violet-300 bg-violet-100 text-[blue]"
+    }`
+
+  const thClass = `border-r border-b border-l border-violet-300 px-3 py-2 font-medium text-violet-700 ${
+    readOnly ? "border-t" : ""
+  }`
+  const tdClass = "border border-violet-300 px-3 py-2"
 
   return (
-    <div style={{ marginTop: "0.5rem" }}>
+    <div className="mt-2">
       {error ? (
-        <div
-          style={{
-            marginBottom: "1rem",
-            background: HEADER_BG,
-            border: `1px solid ${BORDER}`,
-            padding: "0.75rem",
-            borderRadius: 4,
-            fontSize: 13,
-          }}
-        >
+        <div className="mb-4 rounded border border-violet-300 bg-violet-100 p-3 text-[13px]">
           {error}
         </div>
       ) : null}
 
-      <div className="mobile-pad" style={{ display: "flex", gap: 8, marginBottom: "1rem" }}>
+      <div className="mb-4 flex gap-2 max-[650px]:px-3">
         <button
-          className="contained"
           type="button"
           onClick={() => setActiveTab("songs")}
-          style={tabBtnStyle(activeTab === "songs")}
+          className={tabBtnClass(activeTab === "songs")}
         >
           songs ({simplifiedItems.length})
         </button>
         <button
-          className="contained"
           type="button"
           onClick={() => setActiveTab("artists")}
-          style={tabBtnStyle(activeTab === "artists")}
+          className={tabBtnClass(activeTab === "artists")}
         >
           artists ({artistsInPlaylist.length})
         </button>
@@ -474,92 +440,41 @@ export default function PlaylistEditor({
       {activeTab === "artists" ? (
         <>
           {artistsInPlaylist.length > 0 ? (
-            <div className="mobile-pad" style={{ marginBottom: "1rem" }}>
+            <div className="mb-4 max-[650px]:px-3">
               <button
                 type="button"
                 onClick={() => void copyArtistNames()}
-                style={actionBtnStyle(false)}
+                className={actionBtnClass(false)}
               >
                 {artistsCopied ? "copied!" : "[ copy all artist names ]"}
               </button>
             </div>
           ) : null}
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: 14,
-              tableLayout: "fixed",
-            }}
-          >
+          <table className="w-full table-fixed border-collapse text-sm">
             <colgroup>
               <col />
-              <col style={{ width: 80 }} />
+              <col className="w-20" />
             </colgroup>
             <thead>
-              <tr style={{ background: HEADER_BG }}>
-                <th
-                  style={{
-                    textAlign: "left",
-                    padding: "8px 12px",
-                    fontWeight: 500,
-                    border: `1px solid ${BORDER}`,
-                    color: PURPLE,
-                  }}
-                >
-                  artist
-                </th>
-                <th
-                  style={{
-                    textAlign: "center",
-                    padding: "8px 12px",
-                    fontWeight: 500,
-                    border: `1px solid ${BORDER}`,
-                    color: PURPLE,
-                  }}
-                >
-                  tracks
-                </th>
+              <tr className="bg-violet-100">
+                <th className={`${thClass} text-left`}>artist</th>
+                <th className={`${thClass} text-center`}>tracks</th>
               </tr>
             </thead>
             <tbody>
               {artistsInPlaylist.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={2}
-                    style={{
-                      padding: "12px",
-                      border: `1px solid ${BORDER}`,
-                      color: "#888",
-                      fontSize: 13,
-                    }}
-                  >
+                  <td colSpan={2} className="border border-violet-300 p-3 text-[13px] text-[#888]">
                     no artists yet
                   </td>
                 </tr>
               ) : (
                 artistsInPlaylist.map((artist) => (
-                  <tr key={artist.name} style={{ background: "white" }}>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                  <tr key={artist.name} className="bg-white">
+                    <td className={`${tdClass} overflow-hidden text-ellipsis whitespace-nowrap`}>
                       {artist.name}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        textAlign: "center",
-                      }}
-                    >
-                      {artist.trackCount}
-                    </td>
+                    <td className={`${tdClass} text-center`}>{artist.trackCount}</td>
                   </tr>
                 ))
               )}
@@ -570,7 +485,7 @@ export default function PlaylistEditor({
 
       {activeTab === "songs" ? (
         <>
-          <div className="mobile-pad" style={{ marginBottom: "1rem" }}>
+          <div className="mb-4 max-[650px]:px-3">
             <input
               type="search"
               value={songSearch}
@@ -579,21 +494,12 @@ export default function PlaylistEditor({
                 setSelected(new Set())
               }}
               placeholder="track or artist name"
-              style={{
-                width: "100%",
-                padding: "0.5rem 0.75rem",
-                fontSize: 14,
-                border: `1px solid ${BORDER}`,
-                borderRadius: 4,
-                outline: "none",
-                color: PURPLE,
-                background: "white",
-              }}
+              className="w-full rounded border border-violet-300 bg-white px-3 py-2 text-sm text-violet-700 outline-none"
             />
           </div>
 
           {songSearch.trim() ? (
-            <p style={{ margin: "0 0 0.75rem", fontSize: 13, color: "#888" }}>
+            <p className="mb-3 text-[13px] text-[#888]">
               {filteredSongs.length} of {simplifiedItems.length} songs
             </p>
           ) : null}
@@ -614,20 +520,12 @@ export default function PlaylistEditor({
 
           {isNarrow ? (
             <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                display: "grid",
-                gap: 1,
-                borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                borderLeft: `1px solid ${BORDER}`,
-                borderRight: `1px solid ${BORDER}`,
-                overflow: "hidden",
-              }}
+              className={`m-0 grid list-none gap-px overflow-hidden border-r border-l border-violet-300 p-0 ${
+                readOnly ? "border-t" : ""
+              }`}
             >
               {filteredSongs.length === 0 ? (
-                <li style={{ padding: "12px", background: "white", color: "#888", fontSize: 13 }}>
+                <li className="bg-white p-3 text-[13px] text-[#888]">
                   {simplifiedItems.length === 0
                     ? "no songs in this playlist yet"
                     : "no songs match your search"}
@@ -637,36 +535,23 @@ export default function PlaylistEditor({
               {filteredSongs.map((item) => (
                 <li
                   key={`${item.id}-${item.itemsIndex}`}
-                  style={{
-                    background: selected.has(item.uri) ? HEADER_BG : "white",
-                    borderBottom: `1px solid ${BORDER}`,
-                    display: "grid",
-                    gridTemplateColumns: readOnly
-                      ? "auto minmax(0, 1fr)"
-                      : "auto auto minmax(0, 1fr) auto",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "10px 12px",
-                    width: "100%",
-                    boxSizing: "border-box",
-                  }}
+                  className={`box-border grid w-full items-center gap-2.5 border-b border-violet-300 px-3 py-2.5 ${
+                    selected.has(item.uri) ? "bg-violet-100" : "bg-white"
+                  } ${
+                    readOnly
+                      ? "grid-cols-[auto_minmax(0,1fr)]"
+                      : "grid-cols-[auto_auto_minmax(0,1fr)_auto]"
+                  }`}
                 >
                   {!readOnly && (
                     <button
                       onClick={() => toggleSelect(item.uri)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: 0,
-                        color: PURPLE,
-                        lineHeight: 0,
-                      }}
+                      className="cursor-pointer p-0 leading-none text-violet-700"
                     >
                       {selected.has(item.uri) ? (
-                        <CheckboxOn style={{ width: 18, height: 18 }} />
+                        <CheckboxOn className="h-[18px] w-[18px]" />
                       ) : (
-                        <Checkbox style={{ width: 18, height: 18 }} />
+                        <Checkbox className="h-[18px] w-[18px]" />
                       )}
                     </button>
                   )}
@@ -677,50 +562,24 @@ export default function PlaylistEditor({
                       alt=""
                       width={40}
                       height={40}
-                      style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }}
+                      className="h-10 w-10 rounded object-cover"
                     />
                   ) : (
-                    <div
-                      style={{ width: 40, height: 40, borderRadius: 4, background: HEADER_BG }}
-                    />
+                    <div className="h-10 w-10 rounded bg-violet-100" />
                   )}
 
-                  <div style={{ minWidth: 0, overflow: "hidden" }}>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                  <div className="min-w-0 overflow-hidden">
+                    <div className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">
                       {item.name}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#888",
-                        marginTop: 2,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div className="mt-0.5 overflow-hidden text-xs text-ellipsis whitespace-nowrap text-[#888]">
                       {item.artists}
                       {item.durationMs != null ? ` · ${formatDurationMs(item.durationMs)}` : ""}
                     </div>
                   </div>
 
                   {!readOnly && (
-                    <span
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
+                    <span className="flex flex-row items-center gap-1">
                       <button
                         disabled={item.itemsIndex === 0 || isSaving}
                         onClick={async () => {
@@ -728,17 +587,14 @@ export default function PlaylistEditor({
                           moveItemLocally(from, from - 1)
                           await saveMove(from, from - 1)
                         }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: item.itemsIndex === 0 || isSaving ? "default" : "pointer",
-                          padding: 0,
-                          color: item.itemsIndex === 0 || isSaving ? "#c4b5fd" : PURPLE,
-                          lineHeight: 0,
-                        }}
+                        className={`p-0 leading-none ${
+                          item.itemsIndex === 0 || isSaving
+                            ? "cursor-default text-violet-300"
+                            : "cursor-pointer text-violet-700"
+                        }`}
                         title="move up"
                       >
-                        <ChevronUp style={{ width: 28, height: 28, display: "block" }} />
+                        <ChevronUp className="block h-7 w-7" />
                       </button>
                       <button
                         disabled={item.itemsIndex === items.length - 1 || isSaving}
@@ -747,21 +603,14 @@ export default function PlaylistEditor({
                           moveItemLocally(from, from + 1)
                           await saveMove(from, from + 1)
                         }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor:
-                            item.itemsIndex === items.length - 1 || isSaving
-                              ? "default"
-                              : "pointer",
-                          padding: 0,
-                          color:
-                            item.itemsIndex === items.length - 1 || isSaving ? "#c4b5fd" : PURPLE,
-                          lineHeight: 0,
-                        }}
+                        className={`p-0 leading-none ${
+                          item.itemsIndex === items.length - 1 || isSaving
+                            ? "cursor-default text-violet-300"
+                            : "cursor-pointer text-violet-700"
+                        }`}
                         title="move down"
                       >
-                        <ChevronDown style={{ width: 28, height: 28, display: "block" }} />
+                        <ChevronDown className="block h-7 w-7" />
                       </button>
                       {!isXSmall && (
                         <button
@@ -769,17 +618,14 @@ export default function PlaylistEditor({
                           onClick={async () => {
                             await removeItem(item.itemsIndex, item.uri)
                           }}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: isSaving ? "default" : "pointer",
-                            padding: 0,
-                            color: isSaving ? "#c4b5fd" : PURPLE,
-                            lineHeight: 0,
-                          }}
+                          className={`p-0 leading-none ${
+                            isSaving
+                              ? "cursor-default text-violet-300"
+                              : "cursor-pointer text-violet-700"
+                          }`}
                           title="remove"
                         >
-                          <Delete style={{ width: 26, height: 26, display: "block" }} />
+                          <Delete className="block h-[26px] w-[26px]" />
                         </button>
                       )}
                     </span>
@@ -788,142 +634,41 @@ export default function PlaylistEditor({
               ))}
             </ul>
           ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 14,
-                tableLayout: "fixed",
-              }}
-            >
+            <table className="w-full table-fixed border-collapse text-sm">
               <colgroup>
-                {!readOnly && <col style={{ width: 44 }} />}
-                <col style={{ width: 44 }} />
+                {!readOnly && <col className="w-11" />}
+                <col className="w-11" />
                 <col />
-                <col style={{ width: 210 }} />
-                <col style={{ width: 140 }} />
-                <col style={{ width: 105 }} />
-                {!readOnly && <col style={{ width: 130 }} />}
+                <col className="w-[210px]" />
+                <col className="w-[140px]" />
+                <col className="w-[105px]" />
+                {!readOnly && <col className="w-[130px]" />}
               </colgroup>
               <thead>
-                <tr style={{ background: HEADER_BG }}>
+                <tr className="bg-violet-100">
                   {!readOnly && (
-                    <th
-                      style={{
-                        textAlign: "center",
-                        padding: "8px 12px",
-                        borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                        borderLeft: `1px solid ${BORDER}`,
-                        borderRight: `1px solid ${BORDER}`,
-                        borderBottom: `1px solid ${BORDER}`,
-                      }}
-                    >
+                    <th className={`${thClass} text-center`}>
                       <button
                         onClick={toggleSelectAll}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: 0,
-                          color: PURPLE,
-                          width: "100%",
-                          textAlign: "center",
-                          lineHeight: 0,
-                        }}
+                        className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
                       >
                         {allFilteredSelected ? (
-                          <CheckboxOn style={{ width: 18, height: 18 }} />
+                          <CheckboxOn className="h-[18px] w-[18px]" />
                         ) : (
-                          <Checkbox style={{ width: 18, height: 18 }} />
+                          <Checkbox className="h-[18px] w-[18px]" />
                         )}
                       </button>
                     </th>
                   )}
-                  <th
-                    style={{
-                      textAlign: "center",
-                      padding: "8px 12px",
-                      fontWeight: 500,
-                      borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                      borderLeft: `1px solid ${BORDER}`,
-                      borderRight: `1px solid ${BORDER}`,
-                      borderBottom: `1px solid ${BORDER}`,
-                      color: PURPLE,
-                    }}
-                  >
-                    #
+                  <th className={`${thClass} text-center`}>#</th>
+                  <th className={`${thClass} text-left`}>track</th>
+                  <th className={`${thClass} text-left`}>artist</th>
+                  <th className={`${thClass} text-center whitespace-nowrap`}>
+                    added <ChevronDown2 className="inline h-[18px] w-[18px] align-middle" />
                   </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontWeight: 500,
-                      borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                      borderLeft: `1px solid ${BORDER}`,
-                      borderRight: `1px solid ${BORDER}`,
-                      borderBottom: `1px solid ${BORDER}`,
-                      color: PURPLE,
-                    }}
-                  >
-                    track
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontWeight: 500,
-                      borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                      borderLeft: `1px solid ${BORDER}`,
-                      borderRight: `1px solid ${BORDER}`,
-                      borderBottom: `1px solid ${BORDER}`,
-                      color: PURPLE,
-                    }}
-                  >
-                    artist
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "center",
-                      padding: "8px 12px",
-                      fontWeight: 500,
-                      borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                      borderLeft: `1px solid ${BORDER}`,
-                      borderRight: `1px solid ${BORDER}`,
-                      borderBottom: `1px solid ${BORDER}`,
-                      color: PURPLE,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    added{" "}
-                    <ChevronDown2 style={{ width: 18, height: 18, verticalAlign: "middle" }} />
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "center",
-                      padding: "8px 12px",
-                      fontWeight: 500,
-                      borderTop: readOnly ? `1px solid ${BORDER}` : undefined,
-                      borderLeft: `1px solid ${BORDER}`,
-                      borderRight: `1px solid ${BORDER}`,
-                      borderBottom: `1px solid ${BORDER}`,
-                      color: PURPLE,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    duration
-                  </th>
+                  <th className={`${thClass} text-center whitespace-nowrap`}>duration</th>
                   {!readOnly && (
-                    <th
-                      style={{
-                        textAlign: "center",
-                        padding: "8px 12px",
-                        fontWeight: 500,
-                        borderLeft: `1px solid ${BORDER}`,
-                        borderRight: `1px solid ${BORDER}`,
-                        borderBottom: `1px solid ${BORDER}`,
-                        color: PURPLE,
-                      }}
-                    >
+                    <th className="border-r border-b border-l border-violet-300 px-3 py-2 text-center font-medium text-violet-700">
                       actions
                     </th>
                   )}
@@ -934,12 +679,7 @@ export default function PlaylistEditor({
                   <tr>
                     <td
                       colSpan={readOnly ? 5 : 7}
-                      style={{
-                        padding: "12px",
-                        border: `1px solid ${BORDER}`,
-                        color: "#888",
-                        fontSize: 13,
-                      }}
+                      className="border border-violet-300 p-3 text-[13px] text-[#888]"
                     >
                       {simplifiedItems.length === 0
                         ? "no songs in this playlist yet"
@@ -950,136 +690,55 @@ export default function PlaylistEditor({
                 {filteredSongs.map((item) => (
                   <tr
                     key={`${item.id}-${item.itemsIndex}`}
-                    style={{ background: selected.has(item.uri) ? HEADER_BG : "white" }}
+                    className={selected.has(item.uri) ? "bg-violet-100" : "bg-white"}
                   >
                     {!readOnly && (
-                      <td
-                        style={{
-                          padding: "8px 12px",
-                          border: `1px solid ${BORDER}`,
-                          textAlign: "center",
-                        }}
-                      >
+                      <td className={`${tdClass} text-center`}>
                         <button
                           onClick={() => toggleSelect(item.uri)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: 0,
-                            color: PURPLE,
-                            width: "100%",
-                            textAlign: "center",
-                            lineHeight: 0,
-                          }}
+                          className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
                         >
                           {selected.has(item.uri) ? (
-                            <CheckboxOn style={{ width: 18, height: 18 }} />
+                            <CheckboxOn className="h-[18px] w-[18px]" />
                           ) : (
-                            <Checkbox style={{ width: 18, height: 18 }} />
+                            <Checkbox className="h-[18px] w-[18px]" />
                           )}
                         </button>
                       </td>
                     )}
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        textAlign: "center",
-                        color: "#888",
-                      }}
-                    >
-                      {item.itemsIndex + 1}
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                    <td className={`${tdClass} text-center text-[#888]`}>{item.itemsIndex + 1}</td>
+                    <td className={`${tdClass} overflow-hidden`}>
+                      <div className="flex min-w-0 items-center gap-2.5">
                         {item.albumCoverUrl ? (
                           <Image
                             src={item.albumCoverUrl}
                             alt=""
                             width={36}
                             height={36}
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 4,
-                              objectFit: "cover",
-                              flexShrink: 0,
-                            }}
+                            className="size-9 shrink-0 rounded object-cover"
                           />
                         ) : (
-                          <div
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 4,
-                              flexShrink: 0,
-                              background: HEADER_BG,
-                            }}
-                          />
+                          <div className="size-9 shrink-0 rounded bg-violet-100" />
                         )}
-                        <span
-                          style={{
-                            minWidth: 0,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                           {item.name}
                         </span>
                       </div>
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <td className={`${tdClass} overflow-hidden text-ellipsis whitespace-nowrap`}>
                       {item.artists}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        textAlign: "center",
-                        color: "#888",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <td className={`${tdClass} text-center whitespace-nowrap text-[#888]`}>
                       {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
                     </td>
                     <td
-                      style={{
-                        padding: "8px 12px",
-                        border: `1px solid ${BORDER}`,
-                        textAlign: "center",
-                        color: "#888",
-                        fontVariantNumeric: "tabular-nums",
-                        whiteSpace: "nowrap",
-                      }}
+                      className={`${tdClass} text-center whitespace-nowrap tabular-nums text-[#888]`}
                     >
                       {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
                     </td>
                     {!readOnly && (
-                      <td
-                        style={{
-                          padding: "8px 12px",
-                          border: `1px solid ${BORDER}`,
-                          textAlign: "center",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <span style={{ display: "inline-flex", gap: 10 }}>
+                      <td className={`${tdClass} text-center whitespace-nowrap`}>
+                        <span className="inline-flex gap-2.5">
                           <button
                             disabled={item.itemsIndex === 0 || isSaving}
                             onClick={async () => {
@@ -1087,10 +746,7 @@ export default function PlaylistEditor({
                               moveItemLocally(from, from - 1)
                               await saveMove(from, from - 1)
                             }}
-                            style={{
-                              ...actionBtnStyle(item.itemsIndex === 0 || isSaving),
-                              fontSize: 16,
-                            }}
+                            className={`${actionBtnClass(item.itemsIndex === 0 || isSaving)} text-base`}
                             title="move up"
                           >
                             <ChevronUp />
@@ -1102,10 +758,9 @@ export default function PlaylistEditor({
                               moveItemLocally(from, from + 1)
                               await saveMove(from, from + 1)
                             }}
-                            style={{
-                              ...actionBtnStyle(item.itemsIndex === items.length - 1 || isSaving),
-                              fontSize: 16,
-                            }}
+                            className={`${actionBtnClass(
+                              item.itemsIndex === items.length - 1 || isSaving
+                            )} text-base`}
                             title="move down"
                           >
                             <ChevronDown />
@@ -1115,7 +770,7 @@ export default function PlaylistEditor({
                             onClick={async () => {
                               await removeItem(item.itemsIndex, item.uri)
                             }}
-                            style={{ ...actionBtnStyle(isSaving), fontSize: 15 }}
+                            className={`${actionBtnClass(isSaving)} text-[15px]`}
                             title="remove"
                           >
                             <Delete />

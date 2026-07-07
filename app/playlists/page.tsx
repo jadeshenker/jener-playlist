@@ -49,20 +49,10 @@ export default async function PlaylistsPage() {
   }))
 
   return (
-    <main>
-      <div
-        className="mobile-pad"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 8,
-          marginBottom: 28,
-        }}
-      >
-        <h1 style={{ fontSize: 18, margin: 0, color: "blue" }}> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
-        <div style={{ display: "flex", gap: 8 }}>
+    <main className="mx-auto max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-2 max-[650px]:px-3">
+        <h1 className="m-0 text-lg text-[blue]"> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
+        <div className="flex gap-2">
           {session && <SyncButton />}
           {session ? <SignOutButton /> : <SignInButton label="sign in" />}
         </div>

@@ -62,71 +62,41 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const trackCount = dbPlaylist.trackCount ?? dbItems.length
 
   return (
-    <main>
-      <div
-        className="mobile-pad"
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
+    <main className="mx-auto max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
+      <div className="flex items-center justify-between max-[650px]:px-3">
         <Link
           href="/playlists"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 2,
-            fontSize: 13,
-            textDecoration: "none",
-          }}
+          className="inline-flex items-center gap-0.5 text-[13px] text-[blue] no-underline"
         >
-          [ <ChevronLeft style={{ width: 14, height: 14 }} /> back ]
+          [ <ChevronLeft className="h-3.5 w-3.5" /> back ]
         </Link>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           {session && <SyncButton playlistId={playlistId} />}
           {session ? <SignOutButton /> : <SignInButton label="sign in" />}
         </div>
       </div>
 
-      <div
-        className="mobile-pad"
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 20,
-          marginTop: "1.25rem",
-          marginBottom: "1.5rem",
-        }}
-      >
+      <div className="mt-5 mb-6 flex items-start gap-5 max-[650px]:px-3">
         {dbPlaylist.coverUrl ? (
           <Image
             src={dbPlaylist.coverUrl}
             alt=""
             width={120}
             height={120}
-            style={{ width: 120, height: 120, borderRadius: 6, objectFit: "cover", flexShrink: 0 }}
+            className="h-[120px] w-[120px] shrink-0 rounded-md object-cover"
           />
         ) : null}
         <div>
-          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: "0.08em", fontWeight: 400 }}>
-            {dbPlaylist.name}
-          </h1>
-          <p style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}>
+          <h1 className="m-0 text-[28px] font-normal tracking-[0.08em]">{dbPlaylist.name}</h1>
+          <p className="mt-2 mb-0 text-[13px]">
             {dbPlaylist.dateCreated && (
-              <span style={{ fontWeight: 600 }}>{formatAddedAt(dbPlaylist.dateCreated)} · </span>
+              <span className="font-semibold">{formatAddedAt(dbPlaylist.dateCreated)} · </span>
             )}
             {trackCount} tracks
             {totalDurationMs > 0 ? <>, {formatDurationMs(totalDurationMs)}</> : null}
           </p>
           {latestVersion?.description ? (
-            <p
-              style={{
-                marginTop: 8,
-                marginBottom: 0,
-                fontSize: 14,
-                lineHeight: 1.5,
-                maxWidth: 560,
-                whiteSpace: "pre-wrap",
-                color: "#9461fb",
-              }}
-            >
+            <p className="mt-2 mb-0 max-w-[560px] text-sm leading-normal whitespace-pre-wrap text-[#9461fb]">
               {latestVersion.description}
             </p>
           ) : null}
