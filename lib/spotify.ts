@@ -109,6 +109,32 @@ export async function fetchMyOwnedPlaylists(limit = 50): Promise<{
   return { items }
 }
 
+export type SpotifySavedTrack = {
+  added_at?: string
+  track: {
+    id: string
+    name: string
+    uri: string
+    duration_ms?: number
+    artists?: { name: string }[]
+    album?: {
+      images?: { url: string; height?: number | null; width?: number | null }[]
+    }
+  } | null
+}
+
+type SpotifySavedTracksPage = {
+  items?: SpotifySavedTrack[]
+  total?: number
+}
+
+/** Fetches a single page of the current user's Liked Songs (Spotify max limit is 50). */
+export async function fetchLikedSongsPage(limit = 50, offset = 0) {
+  const response = await spotifyFetch(`/me/tracks?limit=${limit}&offset=${offset}`)
+  const data = (await response.json()) as SpotifySavedTracksPage
+  return { items: data.items ?? [], total: data.total ?? 0, limit, offset }
+}
+
 /** True if the playlist exists and `owner.id` matches the authenticated Spotify user. */
 export async function isCurrentUserPlaylistOwner(playlistId: string): Promise<boolean> {
   const [playlistResponse, meResponse] = await Promise.all([

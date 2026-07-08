@@ -81,6 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             "playlist-read-private",
             "playlist-modify-private",
             "playlist-modify-public",
+            "user-library-read",
           ].join(" "),
         }),
     }),
