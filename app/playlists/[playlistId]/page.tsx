@@ -112,6 +112,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
       </div>
 
       <PlaylistEditor
+        key={latestVersion?.id ?? "none"}
         playlistId={playlistId}
         initialItems={items}
         initialSnapshotId={undefined}

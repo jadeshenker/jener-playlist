@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 type SyncState = "idle" | "syncing" | "done" | "error" | "reauth"
 
 export default function SyncButton({ playlistId }: { playlistId?: string }) {
   const [state, setState] = useState<SyncState>("idle")
+  const router = useRouter()
 
   async function handleSync() {
     if (state === "syncing") return
@@ -22,6 +24,7 @@ export default function SyncButton({ playlistId }: { playlistId?: string }) {
       }
       if (!res.ok) throw new Error()
       setState("done")
+      router.refresh()
       setTimeout(() => setState("idle"), 4000)
     } catch {
       setState("error")

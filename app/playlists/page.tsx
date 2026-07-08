@@ -15,6 +15,7 @@ interface PlaylistRow {
   pinned: number
   archived: number
   dateCreated: string | null
+  updatedAt: number
 }
 
 export default async function PlaylistsPage() {
@@ -32,6 +33,7 @@ export default async function PlaylistsPage() {
         pinned: playlistsTable.pinned,
         archived: playlistsTable.archived,
         dateCreated: playlistsTable.dateCreated,
+        updatedAt: playlistsTable.updatedAt,
       })
       .from(playlistsTable)
       .orderBy(desc(playlistsTable.pinned), desc(playlistsTable.dateCreated))
@@ -49,6 +51,8 @@ export default async function PlaylistsPage() {
     dateCreated: r.dateCreated ?? null,
   }))
 
+  const playlistsVersionKey = rows.map((r) => `${r.id}:${r.updatedAt}`).join(",")
+
   return (
     <main className="mx-auto max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-2 max-[650px]:px-3">
@@ -63,7 +67,7 @@ export default async function PlaylistsPage() {
           {session ? <SignOutButton /> : <SignInButton label="sign in" />}
         </div>
       </div>
-      <PlaylistList playlists={playlists} showActions={!!session} />
+      <PlaylistList key={playlistsVersionKey} playlists={playlists} showActions={!!session} />
     </main>
   )
 }
