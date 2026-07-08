@@ -62,7 +62,7 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
   const trackCount = dbPlaylist.trackCount ?? dbItems.length
 
   return (
-    <main className="mx-auto max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
+    <main className="mx-auto w-full max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
       <div className="flex items-center justify-between max-[650px]:px-3">
         <Link
           href="/playlists"

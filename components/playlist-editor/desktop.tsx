@@ -54,10 +54,8 @@ export default function PlaylistEditorDesktop({
     copyArtistNames,
   } = editor
 
-  const thClass = `border-r border-b border-l border-violet-300 px-3 py-2 font-medium text-violet-700 ${
-    readOnly ? "border-t" : ""
-  }`
-  const tdClass = "border border-violet-300 px-3 py-2"
+  const thClass = "border-b border-violet-300 px-3 py-2 font-medium text-violet-700"
+  const tdClass = "border-b border-violet-300 px-3 py-2"
 
   return (
     <div className="mt-2">
@@ -100,7 +98,11 @@ export default function PlaylistEditorDesktop({
             />
           )}
 
-          <table className="w-full table-fixed border-collapse text-sm">
+          <table
+            className={`w-full table-fixed border-collapse border-x border-b border-violet-300 text-sm ${
+              readOnly ? "border-t" : ""
+            }`}
+          >
             <colgroup>
               {!readOnly && <col className="w-11" />}
               <col className="w-11" />
@@ -134,7 +136,7 @@ export default function PlaylistEditorDesktop({
                 </th>
                 <th className={`${thClass} text-center whitespace-nowrap`}>duration</th>
                 {!readOnly && (
-                  <th className="border-r border-b border-l border-violet-300 px-3 py-2 text-center font-medium text-violet-700">
+                  <th className="border-b border-violet-300 px-3 py-2 text-center font-medium text-violet-700">
                     actions
                   </th>
                 )}
@@ -145,7 +147,7 @@ export default function PlaylistEditorDesktop({
                 <tr>
                   <td
                     colSpan={readOnly ? 5 : 7}
-                    className="border border-violet-300 p-3 text-[13px] text-[#888]"
+                    className="border-b border-violet-300 p-3 text-[13px] text-[#888]"
                   >
                     {simplifiedItems.length === 0
                       ? "no songs in this playlist yet"

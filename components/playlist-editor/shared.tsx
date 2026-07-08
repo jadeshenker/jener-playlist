@@ -65,8 +65,8 @@ export function ArtistsPanel({
   copied: boolean
   onCopy: () => void
 }) {
-  const thClass = "border border-violet-300 px-3 py-2 font-medium text-violet-700"
-  const tdClass = "border border-violet-300 px-3 py-2"
+  const thClass = "border-b border-violet-300 px-3 py-2 font-medium text-violet-700"
+  const tdClass = "border-b border-violet-300 px-3 py-2"
   return (
     <>
       {artists.length > 0 ? (
@@ -76,7 +76,7 @@ export function ArtistsPanel({
           </button>
         </div>
       ) : null}
-      <table className="w-full table-fixed border-collapse text-sm">
+      <table className="w-full table-fixed border-collapse border border-violet-300 text-sm">
         <colgroup>
           <col />
           <col className="w-20" />
@@ -90,7 +90,7 @@ export function ArtistsPanel({
         <tbody>
           {artists.length === 0 ? (
             <tr>
-              <td colSpan={2} className="border border-violet-300 p-3 text-[13px] text-[#888]">
+              <td colSpan={2} className="border-b border-violet-300 p-3 text-[13px] text-[#888]">
                 no artists yet
               </td>
             </tr>

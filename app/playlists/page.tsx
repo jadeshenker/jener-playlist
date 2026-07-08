@@ -54,7 +54,7 @@ export default async function PlaylistsPage() {
   const playlistsVersionKey = rows.map((r) => `${r.id}:${r.updatedAt}`).join(",")
 
   return (
-    <main className="mx-auto max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
+    <main className="mx-auto w-full max-w-[960px] px-6 pt-8 pb-12 max-[650px]:px-0 max-[650px]:pt-4 max-[650px]:pb-8">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-2 max-[650px]:px-3">
         <h1 className="m-0 text-lg text-[blue]"> _my_playlists ૮ ˶ᵔ ᵕ ᵔ˶ ა</h1>
         <div className="flex items-center gap-2">
