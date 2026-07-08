@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
+import { useSelection, type SelectedSong } from "@/components/selection/selection-context"
 
 export type PlaylistItem = {
   added_at?: string
@@ -36,7 +37,8 @@ export function usePlaylistEditor({
   const [activeTab, setActiveTab] = useState<EditorTab>("songs")
   const [artistsCopied, setArtistsCopied] = useState(false)
   const [songSearch, setSongSearch] = useState("")
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [lastClickedUri, setLastClickedUri] = useState<string | null>(null)
+  const selection = useSelection()
 
   const simplifiedItems = useMemo(
     () =>
@@ -65,38 +67,54 @@ export function usePlaylistEditor({
     )
   }, [simplifiedItems, songSearch])
 
+  const selected = useMemo(
+    () => new Set(simplifiedItems.filter((item) => selection.isSelected(item.uri)).map((item) => item.uri)),
+    [simplifiedItems, selection]
+  )
+
   const allFilteredSelected =
     filteredSongs.length > 0 && filteredSongs.every((item) => selected.has(item.uri))
 
+  const toSelectedSong = (item: (typeof simplifiedItems)[number]): SelectedSong => ({
+    uri: item.uri,
+    id: item.id,
+    name: item.name,
+    artists: item.artists,
+    albumCoverUrl: item.albumCoverUrl,
+    durationMs: item.durationMs,
+    source: { type: "playlist", playlistId },
+  })
+
   const updateSongSearch = (value: string) => {
     setSongSearch(value)
-    setSelected(new Set())
+    selection.deselectMany([...selected])
   }
 
-  const clearSelected = () => setSelected(new Set())
+  const clearSelected = () => selection.deselectMany(simplifiedItems.map((item) => item.uri))
 
-  const toggleSelect = (uri: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(uri)) next.delete(uri)
-      else next.add(uri)
-      return next
-    })
+  const toggleSelect = (uri: string, shiftKey = false) => {
+    if (shiftKey && lastClickedUri) {
+      const startIndex = filteredSongs.findIndex((item) => item.uri === lastClickedUri)
+      const endIndex = filteredSongs.findIndex((item) => item.uri === uri)
+      if (startIndex !== -1 && endIndex !== -1) {
+        const [from, to] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex]
+        selection.selectMany(filteredSongs.slice(from, to + 1).map(toSelectedSong))
+        setLastClickedUri(uri)
+        return
+      }
+    }
+
+    const item = simplifiedItems.find((item) => item.uri === uri)
+    if (!item) return
+    selection.toggle(toSelectedSong(item))
+    setLastClickedUri(uri)
   }
 
   const toggleSelectAll = () => {
     if (allFilteredSelected) {
-      setSelected((prev) => {
-        const next = new Set(prev)
-        filteredSongs.forEach((item) => next.delete(item.uri))
-        return next
-      })
+      selection.deselectMany(filteredSongs.map((item) => item.uri))
     } else {
-      setSelected((prev) => {
-        const next = new Set(prev)
-        filteredSongs.forEach((item) => next.add(item.uri))
-        return next
-      })
+      selection.selectMany(filteredSongs.map(toSelectedSong))
     }
   }
 
@@ -288,7 +306,7 @@ export function usePlaylistEditor({
       const data = await response.json()
       setSnapshotId(data.snapshot_id)
       setItems((current) => current.filter((item) => !selected.has(item.track?.uri ?? "")))
-      setSelected(new Set())
+      selection.deselectMany(toRemove)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {

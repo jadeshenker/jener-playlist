@@ -122,7 +122,7 @@ export default function PlaylistEditorMobile({
               >
                 {!readOnly && (
                   <button
-                    onClick={() => toggleSelect(item.uri)}
+                    onClick={(e) => toggleSelect(item.uri, e.shiftKey)}
                     className="cursor-pointer p-0 leading-none text-violet-700"
                   >
                     {selected.has(item.uri) ? (

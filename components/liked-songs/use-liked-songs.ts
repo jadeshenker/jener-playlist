@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { spotifyThumbnailUrl } from "@/lib/spotify-images"
 import type { SpotifySavedTrack } from "@/lib/spotify"
+import { useSelection, type SelectedSong } from "@/components/selection/selection-context"
 
 export function useLikedSongs({
   initialItems,
@@ -18,6 +19,8 @@ export function useLikedSongs({
   const [offset, setOffset] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lastClickedUri, setLastClickedUri] = useState<string | null>(null)
+  const selection = useSelection()
 
   const simplifiedItems = items
     .map((item, itemsIndex) => ({ item, itemsIndex }))
@@ -32,6 +35,48 @@ export function useLikedSongs({
       durationMs: item.track!.duration_ms,
       addedAt: item.added_at,
     }))
+
+  const selected = new Set(
+    simplifiedItems.filter((item) => selection.isSelected(item.uri)).map((item) => item.uri)
+  )
+
+  const allSelected = simplifiedItems.length > 0 && simplifiedItems.every((item) => selected.has(item.uri))
+
+  const toSelectedSong = (item: (typeof simplifiedItems)[number]): SelectedSong => ({
+    uri: item.uri,
+    id: item.id,
+    name: item.name,
+    artists: item.artists,
+    albumCoverUrl: item.albumCoverUrl,
+    durationMs: item.durationMs,
+    source: { type: "liked-songs" },
+  })
+
+  const toggleSelect = (uri: string, shiftKey = false) => {
+    if (shiftKey && lastClickedUri) {
+      const startIndex = simplifiedItems.findIndex((item) => item.uri === lastClickedUri)
+      const endIndex = simplifiedItems.findIndex((item) => item.uri === uri)
+      if (startIndex !== -1 && endIndex !== -1) {
+        const [from, to] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex]
+        selection.selectMany(simplifiedItems.slice(from, to + 1).map(toSelectedSong))
+        setLastClickedUri(uri)
+        return
+      }
+    }
+
+    const item = simplifiedItems.find((item) => item.uri === uri)
+    if (!item) return
+    selection.toggle(toSelectedSong(item))
+    setLastClickedUri(uri)
+  }
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      selection.deselectMany(simplifiedItems.map((item) => item.uri))
+    } else {
+      selection.selectMany(simplifiedItems.map(toSelectedSong))
+    }
+  }
 
   async function loadPage(nextOffset: number) {
     setError(null)
@@ -68,6 +113,10 @@ export function useLikedSongs({
     hasNext,
     nextPage: () => loadPage(offset + limit),
     prevPage: () => loadPage(Math.max(offset - limit, 0)),
+    selected,
+    allSelected,
+    toggleSelect,
+    toggleSelectAll,
   }
 }
 

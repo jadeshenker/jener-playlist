@@ -1,14 +1,29 @@
 "use client"
 
 import Image from "next/image"
+import { Checkbox, CheckboxOn } from "pixelarticons/react"
 import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import { ErrorBanner } from "@/components/playlist-editor/shared"
 import { PaginationBar } from "./shared"
 import type { LikedSongsState } from "./use-liked-songs"
 
 export default function LikedSongsDesktop({ state }: { state: LikedSongsState }) {
-  const { simplifiedItems, total, offset, limit, isLoading, error, hasPrev, hasNext, prevPage, nextPage } =
-    state
+  const {
+    simplifiedItems,
+    total,
+    offset,
+    limit,
+    isLoading,
+    error,
+    hasPrev,
+    hasNext,
+    prevPage,
+    nextPage,
+    selected,
+    allSelected,
+    toggleSelect,
+    toggleSelectAll,
+  } = state
 
   const thClass = "border border-violet-300 px-3 py-2 font-medium text-violet-700"
   const tdClass = "border border-violet-300 px-3 py-2"
@@ -31,6 +46,7 @@ export default function LikedSongsDesktop({ state }: { state: LikedSongsState })
       <table className="w-full table-fixed border-collapse text-sm">
         <colgroup>
           <col className="w-11" />
+          <col className="w-11" />
           <col />
           <col className="w-[210px]" />
           <col className="w-[140px]" />
@@ -38,6 +54,18 @@ export default function LikedSongsDesktop({ state }: { state: LikedSongsState })
         </colgroup>
         <thead>
           <tr className="bg-violet-100">
+            <th className={`${thClass} text-center`}>
+              <button
+                onClick={toggleSelectAll}
+                className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
+              >
+                {allSelected ? (
+                  <CheckboxOn className="h-[18px] w-[18px]" />
+                ) : (
+                  <Checkbox className="h-[18px] w-[18px]" />
+                )}
+              </button>
+            </th>
             <th className={`${thClass} text-center`}>#</th>
             <th className={`${thClass} text-left`}>track</th>
             <th className={`${thClass} text-left`}>artist</th>
@@ -48,13 +76,28 @@ export default function LikedSongsDesktop({ state }: { state: LikedSongsState })
         <tbody>
           {simplifiedItems.length === 0 ? (
             <tr>
-              <td colSpan={5} className="border border-violet-300 p-3 text-[13px] text-[#888]">
+              <td colSpan={6} className="border border-violet-300 p-3 text-[13px] text-[#888]">
                 no liked songs found
               </td>
             </tr>
           ) : null}
           {simplifiedItems.map((item) => (
-            <tr key={`${item.id}-${item.itemsIndex}`} className="bg-white">
+            <tr
+              key={`${item.id}-${item.itemsIndex}`}
+              className={selected.has(item.uri) ? "bg-violet-100" : "bg-white"}
+            >
+              <td className={`${tdClass} text-center`}>
+                <button
+                  onClick={(e) => toggleSelect(item.uri, e.shiftKey)}
+                  className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
+                >
+                  {selected.has(item.uri) ? (
+                    <CheckboxOn className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Checkbox className="h-[18px] w-[18px]" />
+                  )}
+                </button>
+              </td>
               <td className={`${tdClass} text-center text-[#888]`}>
                 {offset + item.itemsIndex + 1}
               </td>

@@ -161,7 +161,7 @@ export default function PlaylistEditorDesktop({
                   {!readOnly && (
                     <td className={`${tdClass} text-center`}>
                       <button
-                        onClick={() => toggleSelect(item.uri)}
+                        onClick={(e) => toggleSelect(item.uri, e.shiftKey)}
                         className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
                       >
                         {selected.has(item.uri) ? (
