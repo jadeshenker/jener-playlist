@@ -6,8 +6,11 @@ import { Close, Grid3x3 } from "pixelarticons/react"
 import { formatDurationMs } from "@/lib/format"
 import { useSelection } from "./selection-context"
 
+export const TRAY_SONGS_DRAG_MIME = "application/x-tray-songs"
+
 export default function SelectedSongsTray() {
   const [isDesktop, setIsDesktop] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 750)
     check()
@@ -20,13 +23,27 @@ export default function SelectedSongsTray() {
   if (!isDesktop || selected.length === 0) return null
 
   return (
-    <div className="sticky top-8 mt-8 mr-8 mb-8 ml-6 w-[280px] shrink-0 self-start rounded border border-violet-300 bg-purple-50">
-      <div className="flex items-center justify-between gap-2 rounded-t border-b border-violet-300 bg-violet-100 px-3 py-2">
+    <div
+      className={`sticky top-8 mt-8 mr-8 mb-8 ml-6 w-[280px] shrink-0 self-start rounded border border-violet-300 bg-purple-50 ${
+        isDragging ? "opacity-50" : ""
+      }`}
+    >
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData(TRAY_SONGS_DRAG_MIME, "1")
+          e.dataTransfer.effectAllowed = "copy"
+          setIsDragging(true)
+        }}
+        onDragEnd={() => setIsDragging(false)}
+        className="flex cursor-grab items-center justify-between gap-2 rounded-t border-b border-violet-300 bg-violet-100 px-3 py-2 active:cursor-grabbing"
+      >
         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-violet-700">
           {selected.length} songs selected
         </span>
         <button
           onClick={clear}
+          draggable={false}
           className="shrink-0 cursor-pointer p-0 leading-none text-violet-700"
           title="clear selection"
         >
@@ -73,7 +90,11 @@ export default function SelectedSongsTray() {
 
       <div className="flex items-center justify-between border-t border-violet-300 px-3 py-2">
         <span className="text-[13px] text-[#888]">{selected.length} songs</span>
-        <button disabled className="cursor-default p-0 leading-none text-violet-300" title="options">
+        <button
+          disabled
+          className="cursor-default p-0 leading-none text-violet-300"
+          title="options"
+        >
           <Grid3x3 className="block h-4 w-4" />
         </button>
       </div>

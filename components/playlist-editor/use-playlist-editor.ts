@@ -68,7 +68,10 @@ export function usePlaylistEditor({
   }, [simplifiedItems, songSearch])
 
   const selected = useMemo(
-    () => new Set(simplifiedItems.filter((item) => selection.isSelected(item.uri)).map((item) => item.uri)),
+    () =>
+      new Set(
+        simplifiedItems.filter((item) => selection.isSelected(item.uri)).map((item) => item.uri)
+      ),
     [simplifiedItems, selection]
   )
 
@@ -314,6 +317,44 @@ export function usePlaylistEditor({
     }
   }
 
+  async function addSelectedSongsAfter(afterIndex: number) {
+    const songs = selection.selected
+    if (songs.length === 0) return 0
+
+    setError(null)
+    setIsSaving(true)
+    try {
+      const position = afterIndex + 1
+      const response = await fetch(`/api/playlists/${playlistId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uris: songs.map((song) => song.uri), position }),
+      })
+      if (!response.ok) throw new Error("Failed to add tracks")
+      const data = await response.json()
+      setSnapshotId(data.snapshot_id)
+
+      const newItems: PlaylistItem[] = songs.map((song) => ({
+        added_at: new Date().toISOString(),
+        track: {
+          id: song.id,
+          uri: song.uri,
+          name: song.name,
+          duration_ms: song.durationMs,
+          artists: [{ name: song.artists }],
+          album: song.albumCoverUrl ? { images: [{ url: song.albumCoverUrl }] } : undefined,
+        },
+      }))
+      setItems((prev) => [...prev.slice(0, position), ...newItems, ...prev.slice(position)])
+      return songs.length
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+      return 0
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function copyArtistNames() {
     const text = artistsInPlaylist.map((a) => a.name).join("\n")
     try {
@@ -348,6 +389,7 @@ export function usePlaylistEditor({
     saveMove,
     removeItem,
     removeSelectedItems,
+    addSelectedSongsAfter,
     copyArtistNames,
   }
 }

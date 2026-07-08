@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { Fragment, useRef, useState } from "react"
 import { formatAddedAt, formatDurationMs } from "@/lib/format"
 import {
   Checkbox,
@@ -10,6 +11,7 @@ import {
   ChevronUp,
   Delete,
 } from "pixelarticons/react"
+import { TRAY_SONGS_DRAG_MIME } from "@/components/selection/tray"
 import {
   ArtistsPanel,
   BulkActionBar,
@@ -17,6 +19,7 @@ import {
   SongSearchBar,
   SongSearchCount,
   TabBar,
+  Toast,
   actionBtnClass,
 } from "./shared"
 import type { PlaylistEditorState } from "./use-playlist-editor"
@@ -51,11 +54,44 @@ export default function PlaylistEditorDesktop({
     saveMove,
     removeItem,
     removeSelectedItems,
+    addSelectedSongsAfter,
     copyArtistNames,
   } = editor
 
   const thClass = "border-b border-violet-300 px-3 py-2 font-medium text-violet-700"
   const tdClass = "border-b border-violet-300 px-3 py-2"
+
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
+  const [pendingDropIndex, setPendingDropIndex] = useState<number | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToastMessage(message)
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2500)
+  }
+
+  const handleRowDragOver = (e: React.DragEvent, index: number) => {
+    if (readOnly || !e.dataTransfer.types.includes(TRAY_SONGS_DRAG_MIME)) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "copy"
+    setDropTargetIndex(index)
+  }
+
+  const handleRowDrop = async (e: React.DragEvent, index: number) => {
+    if (readOnly || !e.dataTransfer.types.includes(TRAY_SONGS_DRAG_MIME)) return
+    e.preventDefault()
+    setDropTargetIndex(null)
+    setPendingDropIndex(index)
+    const count = await addSelectedSongsAfter(index)
+    setPendingDropIndex(null)
+    if (count > 0) showToast(`added ${count} song${count === 1 ? "" : "s"} to playlist`)
+  }
+
+  const handleTableDragLeave = (e: React.DragEvent<HTMLTableSectionElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropTargetIndex(null)
+  }
 
   return (
     <div className="mt-2">
@@ -142,9 +178,12 @@ export default function PlaylistEditorDesktop({
                 )}
               </tr>
             </thead>
-            <tbody>
+            <tbody onDragLeave={handleTableDragLeave}>
               {filteredSongs.length === 0 ? (
-                <tr>
+                <tr
+                  onDragOver={(e) => handleRowDragOver(e, -1)}
+                  onDrop={(e) => void handleRowDrop(e, -1)}
+                >
                   <td
                     colSpan={readOnly ? 5 : 7}
                     className="border-b border-violet-300 p-3 text-[13px] text-[#888]"
@@ -155,103 +194,138 @@ export default function PlaylistEditorDesktop({
                   </td>
                 </tr>
               ) : null}
-              {filteredSongs.map((item) => (
-                <tr
-                  key={`${item.id}-${item.itemsIndex}`}
-                  className={selected.has(item.uri) ? "bg-violet-100" : "bg-white"}
-                >
-                  {!readOnly && (
-                    <td className={`${tdClass} text-center`}>
-                      <button
-                        onClick={(e) => toggleSelect(item.uri, e.shiftKey)}
-                        className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
-                      >
-                        {selected.has(item.uri) ? (
-                          <CheckboxOn className="h-[18px] w-[18px]" />
-                        ) : (
-                          <Checkbox className="h-[18px] w-[18px]" />
-                        )}
-                      </button>
-                    </td>
-                  )}
-                  <td className={`${tdClass} text-center text-[#888]`}>{item.itemsIndex + 1}</td>
-                  <td className={`${tdClass} overflow-hidden`}>
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      {item.albumCoverUrl ? (
-                        <Image
-                          src={item.albumCoverUrl}
-                          alt=""
-                          width={36}
-                          height={36}
-                          className="size-9 shrink-0 rounded object-cover"
-                        />
-                      ) : (
-                        <div className="size-9 shrink-0 rounded bg-violet-100" />
-                      )}
-                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                        {item.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className={`${tdClass} overflow-hidden text-ellipsis whitespace-nowrap`}>
-                    {item.artists}
-                  </td>
-                  <td className={`${tdClass} text-center whitespace-nowrap text-[#888]`}>
-                    {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
-                  </td>
-                  <td
-                    className={`${tdClass} text-center whitespace-nowrap tabular-nums text-[#888]`}
+              {simplifiedItems.length === 0 &&
+                (dropTargetIndex === -1 || pendingDropIndex === -1) && (
+                  <tr
+                    onDragOver={(e) => handleRowDragOver(e, -1)}
+                    onDrop={(e) => void handleRowDrop(e, -1)}
                   >
-                    {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
-                  </td>
-                  {!readOnly && (
-                    <td className={`${tdClass} text-center whitespace-nowrap`}>
-                      <span className="inline-flex gap-2.5">
+                    <td
+                      colSpan={readOnly ? 5 : 7}
+                      className={`h-10 border-b border-dashed border-violet-400 p-0 ${
+                        pendingDropIndex === -1 ? "drop-pending-row" : "bg-violet-100"
+                      }`}
+                    />
+                  </tr>
+                )}
+              {filteredSongs.map((item) => (
+                <Fragment key={`${item.id}-${item.itemsIndex}`}>
+                  <tr
+                    onDragOver={(e) => handleRowDragOver(e, item.itemsIndex)}
+                    onDrop={(e) => void handleRowDrop(e, item.itemsIndex)}
+                    className={selected.has(item.uri) ? "bg-violet-100" : "bg-white"}
+                  >
+                    {!readOnly && (
+                      <td className={`${tdClass} text-center`}>
                         <button
-                          disabled={item.itemsIndex === 0 || isSaving}
-                          onClick={async () => {
-                            const from = item.itemsIndex
-                            moveItemLocally(from, from - 1)
-                            await saveMove(from, from - 1)
-                          }}
-                          className={`${actionBtnClass(item.itemsIndex === 0 || isSaving)} text-base`}
-                          title="move up"
+                          onClick={(e) => toggleSelect(item.uri, e.shiftKey)}
+                          className="w-full cursor-pointer p-0 text-center leading-none text-violet-700"
                         >
-                          <ChevronUp />
+                          {selected.has(item.uri) ? (
+                            <CheckboxOn className="h-[18px] w-[18px]" />
+                          ) : (
+                            <Checkbox className="h-[18px] w-[18px]" />
+                          )}
                         </button>
-                        <button
-                          disabled={item.itemsIndex === items.length - 1 || isSaving}
-                          onClick={async () => {
-                            const from = item.itemsIndex
-                            moveItemLocally(from, from + 1)
-                            await saveMove(from, from + 1)
-                          }}
-                          className={`${actionBtnClass(
-                            item.itemsIndex === items.length - 1 || isSaving
-                          )} text-base`}
-                          title="move down"
-                        >
-                          <ChevronDown />
-                        </button>
-                        <button
-                          disabled={isSaving}
-                          onClick={async () => {
-                            await removeItem(item.itemsIndex, item.uri)
-                          }}
-                          className={`${actionBtnClass(isSaving)} text-[15px]`}
-                          title="remove"
-                        >
-                          <Delete />
-                        </button>
-                      </span>
+                      </td>
+                    )}
+                    <td className={`${tdClass} text-center text-[#888]`}>{item.itemsIndex + 1}</td>
+                    <td className={`${tdClass} overflow-hidden`}>
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        {item.albumCoverUrl ? (
+                          <Image
+                            src={item.albumCoverUrl}
+                            alt=""
+                            width={36}
+                            height={36}
+                            className="size-9 shrink-0 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="size-9 shrink-0 rounded bg-violet-100" />
+                        )}
+                        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                          {item.name}
+                        </span>
+                      </div>
                     </td>
+                    <td className={`${tdClass} overflow-hidden text-ellipsis whitespace-nowrap`}>
+                      {item.artists}
+                    </td>
+                    <td className={`${tdClass} text-center whitespace-nowrap text-[#888]`}>
+                      {item.addedAt ? formatAddedAt(item.addedAt) : "—"}
+                    </td>
+                    <td
+                      className={`${tdClass} text-center whitespace-nowrap tabular-nums text-[#888]`}
+                    >
+                      {item.durationMs != null ? formatDurationMs(item.durationMs) : "—"}
+                    </td>
+                    {!readOnly && (
+                      <td className={`${tdClass} text-center whitespace-nowrap`}>
+                        <span className="inline-flex gap-2.5">
+                          <button
+                            disabled={item.itemsIndex === 0 || isSaving}
+                            onClick={async () => {
+                              const from = item.itemsIndex
+                              moveItemLocally(from, from - 1)
+                              await saveMove(from, from - 1)
+                            }}
+                            className={`${actionBtnClass(item.itemsIndex === 0 || isSaving)} text-base`}
+                            title="move up"
+                          >
+                            <ChevronUp />
+                          </button>
+                          <button
+                            disabled={item.itemsIndex === items.length - 1 || isSaving}
+                            onClick={async () => {
+                              const from = item.itemsIndex
+                              moveItemLocally(from, from + 1)
+                              await saveMove(from, from + 1)
+                            }}
+                            className={`${actionBtnClass(
+                              item.itemsIndex === items.length - 1 || isSaving
+                            )} text-base`}
+                            title="move down"
+                          >
+                            <ChevronDown />
+                          </button>
+                          <button
+                            disabled={isSaving}
+                            onClick={async () => {
+                              await removeItem(item.itemsIndex, item.uri)
+                            }}
+                            className={`${actionBtnClass(isSaving)} text-[15px]`}
+                            title="remove"
+                          >
+                            <Delete />
+                          </button>
+                        </span>
+                      </td>
+                    )}
+                  </tr>
+                  {(dropTargetIndex === item.itemsIndex ||
+                    pendingDropIndex === item.itemsIndex) && (
+                    <tr
+                      onDragOver={(e) => handleRowDragOver(e, item.itemsIndex)}
+                      onDrop={(e) => void handleRowDrop(e, item.itemsIndex)}
+                    >
+                      <td
+                        colSpan={readOnly ? 5 : 7}
+                        className={`h-10 border-b border-dashed border-violet-400 p-0 ${
+                          pendingDropIndex === item.itemsIndex
+                            ? "drop-pending-row"
+                            : "bg-violet-100"
+                        }`}
+                      />
+                    </tr>
                   )}
-                </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
         </>
       ) : null}
+
+      <Toast message={toastMessage} />
     </div>
   )
 }
