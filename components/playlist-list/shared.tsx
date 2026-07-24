@@ -52,12 +52,12 @@ export function PlaylistCardList({
   return (
     <ul className="m-0 list-none overflow-hidden border border-violet-300 p-0">
       {playlists.length ? (
-        playlists.map((playlist) => (
+        playlists.map((playlist, index) => (
           <li
             key={playlist.id}
-            className={`box-border grid w-full items-center gap-2.5 border-b border-violet-300 bg-white px-3 py-2.5 ${
-              showActions ? "grid-cols-[minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)]"
-            }`}
+            className={`box-border grid w-full items-center gap-2.5 bg-white px-3 py-2.5 ${
+              index < playlists.length - 1 ? "border-b border-violet-300" : ""
+            } ${showActions ? "grid-cols-[minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)]"}`}
           >
             <Link
               href={`/playlists/${playlist.id}`}
